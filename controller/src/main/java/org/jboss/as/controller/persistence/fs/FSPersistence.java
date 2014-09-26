@@ -345,6 +345,11 @@ public class FSPersistence {
                     final ModelNode childAddress = address.clone();
                     childAddress.add(type, child);
                     final PathElement pe = PathElement.pathElement(type, child);
+                    final Resource childRes = actual.getChild(pe);
+                    if(!FSPersistence.isPersistent(childRes)) {
+                        System.out.println("SKIPPING AS NOT PERSISTENT 1: " + childAddress);
+                        continue;
+                    }
                     final ImmutableManagementResourceRegistration childReg;
                     if(registration != null) {
                         childReg = registration.getSubModel(PathAddress.pathAddress(type, child));
@@ -359,9 +364,9 @@ public class FSPersistence {
                     }
 
                     if(targetChildren.remove(child)) {
-                        diff(childReg, childAddress, actual.getChild(pe), target.getChild(pe), diffList);
+                        diff(childReg, childAddress, childRes, target.getChild(pe), diffList);
                     } else {
-                        diffRemoveResource(childReg, childAddress, actual.getChild(pe), diffList);
+                        diffRemoveResource(childReg, childAddress, childRes, diffList);
                     }
                 }
 
@@ -391,6 +396,10 @@ public class FSPersistence {
                 for(Resource.ResourceEntry child : actual.getChildren(type)) {
                     final ModelNode childAddress = address.clone();
                     childAddress.add(type, child.getName());
+                    if(!FSPersistence.isPersistent(child)) {
+                        System.out.println("SKIPPING AS NOT PERSISTENT 2: " + childAddress);
+                        continue;
+                    }
                     if(registration != null) {
                         final ImmutableManagementResourceRegistration childReg = registration.getSubModel(
                                 PathAddress.pathAddress(type, child.getName()));
@@ -496,12 +505,14 @@ public class FSPersistence {
         // otherwise, it's not clear to me what the inconsistency would mean and
         // how to handle it
         if(!actual.isDefined()) {
-            throw new IllegalStateException("Actual model is undefined");
+            throw new IllegalStateException("Actual model is undefined at " + address);
         }
+/* TODO this fell on core-service=management/access=audit/logger=audit-log/handler=file
+ * the actual was {} and the target undefined
         if(!target.isDefined()) {
-            throw new IllegalStateException("Target model is undefined");
+            throw new IllegalStateException("Target model is undefined at " + address + " while the actual is " + actual);
         }
-
+*/
         if(registration != null) {
             final WriteAttributeDiff diff = ResourceDiff.Factory.writeAttribute(address);
             for(String name : registration.getAttributeNames(PathAddress.EMPTY_ADDRESS)) {

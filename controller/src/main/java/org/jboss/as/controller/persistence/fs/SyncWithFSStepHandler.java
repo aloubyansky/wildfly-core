@@ -23,11 +23,16 @@ package org.jboss.as.controller.persistence.fs;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 
 import org.jboss.as.controller.OperationContext;
+import org.jboss.as.controller.OperationDefinition;
 import org.jboss.as.controller.OperationFailedException;
 import org.jboss.as.controller.OperationStepHandler;
 import org.jboss.as.controller.PathAddress;
+import org.jboss.as.controller.SimpleOperationDefinitionBuilder;
+import org.jboss.as.controller.descriptions.ModelDescriptionConstants;
+import org.jboss.as.controller.descriptions.common.ControllerResolver;
 import org.jboss.as.controller.registry.ImmutableManagementResourceRegistration;
 import org.jboss.as.controller.registry.Resource;
 import org.jboss.dmr.ModelNode;
@@ -36,13 +41,16 @@ import org.jboss.dmr.ModelNode;
  *
  * @author Alexey Loubyansky
  */
-class PersistToFSStepHandler implements OperationStepHandler {
+public class SyncWithFSStepHandler implements OperationStepHandler {
 
-    public static final String NAME = "persist-to-fs";
+    public static final String NAME = "sync-with-fs";
+
+    public static final OperationDefinition DEFINITION = new SimpleOperationDefinitionBuilder(NAME, ControllerResolver.getResolver())
+        .build();
 
     private final File dir;
 
-    PersistToFSStepHandler(File dir) {
+    public SyncWithFSStepHandler(File dir) {
         if(dir == null) {
             throw new IllegalArgumentException("Directory is null");
         }
@@ -53,12 +61,27 @@ class PersistToFSStepHandler implements OperationStepHandler {
     public void execute(OperationContext context, ModelNode operation) throws OperationFailedException {
 
         final ImmutableManagementResourceRegistration registration = context.getResourceRegistration();
-        final Resource resource = context.readResource(PathAddress.EMPTY_ADDRESS);
-        if(FSPersistence.isPersistent(registration) && FSPersistence.isPersistent(resource)) {
+        final Resource actual = context.readResource(PathAddress.EMPTY_ADDRESS);
+        if(FSPersistence.isPersistent(registration) && FSPersistence.isPersistent(actual)) {
+            List<ResourceDiff> diffs;
             try {
-                FSPersistence.persist(registration, resource, dir);
+                diffs = FSPersistence.diff(registration, operation.get(ModelDescriptionConstants.ADDRESS), actual, dir);
             } catch (IOException e) {
-                throw new OperationFailedException("Failed to persist resource", e);
+                throw new OperationFailedException("Failed to read resource from " + dir.getAbsolutePath(), e);
+            }
+
+            if(!diffs.isEmpty()) {
+                try {
+                for(ResourceDiff diff : diffs) {
+                    diff.addStepHandlers(context, registration);
+                }
+                } catch(OperationFailedException e) {
+                    e.printStackTrace();
+                    throw e;
+                } catch(Throwable t) {
+                    t.printStackTrace();
+                    throw new OperationFailedException("Failed to add step handlers", t);
+                }
             }
         }
 

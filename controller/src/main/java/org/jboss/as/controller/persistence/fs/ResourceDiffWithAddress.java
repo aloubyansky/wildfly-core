@@ -67,7 +67,7 @@ abstract class ResourceDiffWithAddress implements ResourceDiff {
             throws OperationFailedException {
         final OperationStepHandler step = resReg.getOperationHandler(PathAddress.EMPTY_ADDRESS, opName);
         if(step == null) {
-            throw new OperationFailedException("No handler for " + opName);
+            throw new OperationFailedException("No handler for " + opName + " at " + address);
         }
         opCtx.addStep(op, step, Stage.MODEL);
     }

@@ -65,6 +65,8 @@ import org.jboss.as.controller.operations.validation.IntRangeValidator;
 import org.jboss.as.controller.operations.validation.ParameterValidator;
 import org.jboss.as.controller.operations.validation.StringLengthValidator;
 import org.jboss.as.controller.persistence.ExtensibleConfigurationPersister;
+import org.jboss.as.controller.persistence.fs.PersistToFSStepHandler;
+import org.jboss.as.controller.persistence.fs.SyncWithFSStepHandler;
 import org.jboss.as.controller.registry.ManagementResourceRegistration;
 import org.jboss.as.controller.resource.InterfaceDefinition;
 import org.jboss.as.controller.resource.SocketBindingGroupResourceDefinition;
@@ -265,6 +267,10 @@ public class ServerRootResourceDefinition extends SimpleResourceDefinition {
         resourceRegistration.registerOperationHandler(SchemaLocationAddHandler.DEFINITION, SchemaLocationAddHandler.INSTANCE);
         resourceRegistration.registerOperationHandler(SchemaLocationRemoveHandler.DEFINITION, SchemaLocationRemoveHandler.INSTANCE);
         resourceRegistration.registerOperationHandler(ValidateAddressOperationHandler.DEFINITION, ValidateAddressOperationHandler.INSTANCE, false);
+
+        java.io.File fsPersistenceDir = new java.io.File("fs-persistence");
+        resourceRegistration.registerOperationHandler(PersistToFSStepHandler.DEFINITION, new PersistToFSStepHandler(fsPersistenceDir));
+        resourceRegistration.registerOperationHandler(SyncWithFSStepHandler.DEFINITION, new SyncWithFSStepHandler(fsPersistenceDir));
 
         DeploymentUploadBytesHandler.register(resourceRegistration, contentRepository);
         DeploymentUploadURLHandler.register(resourceRegistration, contentRepository);
