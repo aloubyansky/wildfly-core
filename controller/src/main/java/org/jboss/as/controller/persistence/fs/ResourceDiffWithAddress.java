@@ -72,7 +72,8 @@ abstract class ResourceDiffWithAddress implements ResourceDiff {
         opCtx.addStep(op, step, Stage.MODEL);
     }
 
-    protected ModelNode toOperationRequest() {
+    @Override
+    public ModelNode toOperationRequest() {
         return getAddressedRequest();
     }
 

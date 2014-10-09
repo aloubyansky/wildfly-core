@@ -62,7 +62,7 @@ public class SyncWithFSStepHandler implements OperationStepHandler {
 
         final ImmutableManagementResourceRegistration registration = context.getResourceRegistration();
         final Resource actual = context.readResource(PathAddress.EMPTY_ADDRESS);
-        if(FSPersistence.isPersistent(registration) && FSPersistence.isPersistent(actual)) {
+        if(FSPersistence.isPersistent(actual, registration)) {
             List<ResourceDiff> diffs;
             try {
                 diffs = FSPersistence.diff(registration, operation.get(ModelDescriptionConstants.ADDRESS), actual, dir);

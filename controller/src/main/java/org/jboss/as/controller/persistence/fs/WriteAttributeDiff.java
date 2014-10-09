@@ -51,7 +51,7 @@ class WriteAttributeDiff extends ResourceDiffWithAttributes {
     }
 
     @Override
-    protected ModelNode toOperationRequest() {
+    public ModelNode toOperationRequest() {
         if(attributes.isEmpty()) {
             throw new IllegalStateException("No attributes to write");
         }

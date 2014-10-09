@@ -91,6 +91,7 @@ import org.jboss.as.controller.logging.ControllerLogger;
 import org.jboss.as.controller.notification.NotificationSupport;
 import org.jboss.as.controller.persistence.ConfigurationPersistenceException;
 import org.jboss.as.controller.persistence.ConfigurationPersister;
+import org.jboss.as.controller.persistence.fs.FSPersistence;
 import org.jboss.as.controller.registry.DelegatingResource;
 import org.jboss.as.controller.registry.ImmutableManagementResourceRegistration;
 import org.jboss.as.controller.registry.ManagementResourceRegistration;
@@ -697,9 +698,37 @@ class ModelControllerImpl implements ModelController {
     }
 
     ConfigurationPersister.PersistenceResource writeModel(final ManagementModelImpl model, Set<PathAddress> affectedAddresses) throws ConfigurationPersistenceException {
+        return writeAsFSTree(model);
+//        return writeModelAsXML(model, affectedAddresses);
+    }
+
+    ConfigurationPersister.PersistenceResource writeModelAsXML(final ManagementModelImpl model,
+            Set<PathAddress> affectedAddresses) throws ConfigurationPersistenceException {
         ControllerLogger.MGMT_OP_LOGGER.tracef("persisting %s from %s", model.rootResource, model);
-        final ModelNode newModel = Resource.Tools.readModel(model.rootResource);
-        final ConfigurationPersister.PersistenceResource delegate = persister.store(newModel, affectedAddresses);
+      final ModelNode newModel = Resource.Tools.readModel(model.rootResource);
+      final ConfigurationPersister.PersistenceResource delegate = persister.store(newModel, affectedAddresses);
+      return new ConfigurationPersister.PersistenceResource() {
+
+          @Override
+          public void commit() {
+              // Discard the tracker first, so if there's any race the new OperationContextImpl
+              // gets a cleared tracker
+              if (hostServerGroupTracker != null) {
+                  hostServerGroupTracker.invalidate();
+              }
+              model.publish();
+              delegate.commit();
+          }
+
+          @Override
+          public void rollback() {
+              delegate.rollback();
+          }
+      };
+    }
+
+    ConfigurationPersister.PersistenceResource writeAsFSTree(final ManagementModelImpl model) {
+        ControllerLogger.MGMT_OP_LOGGER.tracef("persisting %s from %s", model.rootResource, model);
         return new ConfigurationPersister.PersistenceResource() {
 
             @Override
@@ -710,12 +739,19 @@ class ModelControllerImpl implements ModelController {
                     hostServerGroupTracker.invalidate();
                 }
                 model.publish();
-                delegate.commit();
+//                delegate.commit();
+                try {
+                    FSPersistence.persist(model.resourceRegistration, model.rootResource,
+                            new java.io.File("/home/avoka/git/fs-persistence"));
+                } catch (IOException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
             }
 
             @Override
             public void rollback() {
-                delegate.rollback();
+                //delegate.rollback();
             }
         };
     }

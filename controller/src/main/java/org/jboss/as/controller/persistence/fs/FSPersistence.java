@@ -36,6 +36,7 @@ import java.util.Set;
 
 import org.jboss.as.controller.PathAddress;
 import org.jboss.as.controller.PathElement;
+import org.jboss.as.controller.descriptions.ModelDescriptionConstants;
 import org.jboss.as.controller.registry.AttributeAccess;
 import org.jboss.as.controller.registry.ImmutableManagementResourceRegistration;
 import org.jboss.as.controller.registry.Resource;
@@ -69,19 +70,23 @@ public class FSPersistence {
      */
     public static void persist(ImmutableManagementResourceRegistration registration,
             Resource res, File dir) throws IOException {
+        persist(registration, res, dir, true);
+    }
 
-        if(registration != null && !isPersistent(registration)) {
-            return;
-        }
-        if(!isPersistent(res)) {
+    public static void persist(ImmutableManagementResourceRegistration registration,
+            Resource res, File dir, boolean removeNotOverriden) throws IOException {
+
+        if(!isPersistent(res, registration)) {
             return;
         }
 
         final Set<String> resourceTypes = res.getChildTypes();
         if(resourceTypes.isEmpty()) {
             if(dir.exists()) {
-                for(File child : dir.listFiles()) {
-                    rmrf(child);
+                if (removeNotOverriden) {
+                    for (File child : dir.listFiles()) {
+                        rmrf(child);
+                    }
                 }
             } else {
                 if(!dir.mkdirs()) {
@@ -92,13 +97,16 @@ public class FSPersistence {
             // types that should be removed from the filesystem
             final Set<String> fsTypesToRemove;
             if(dir.exists()) {
-                fsTypesToRemove = new HashSet<String>(
-                        Arrays.asList(dir.list(new FilenameFilter(){
-                            @Override
-                            public boolean accept(File dir, String name) {
-                                return !name.equals(RESOURCE_FILE_NAME);
-                            }
-                        })));
+                if(removeNotOverriden) {
+                    fsTypesToRemove = new HashSet<String>(Arrays.asList(dir.list(new FilenameFilter() {
+                        @Override
+                        public boolean accept(File dir, String name) {
+                            return !name.equals(RESOURCE_FILE_NAME);
+                        }
+                    })));
+                } else {
+                    fsTypesToRemove = Collections.emptySet();
+                }
             } else {
                 if(!dir.mkdirs()) {
                     throw new IOException("Failed to create " + dir.getAbsolutePath());
@@ -113,8 +121,10 @@ public class FSPersistence {
 
                 if(resourceChildren.isEmpty()) {
                     if(fsType.exists()) {
-                        for(File child : fsType.listFiles()) {
-                            rmrf(child);
+                        if (removeNotOverriden) {
+                            for (File child : fsType.listFiles()) {
+                                rmrf(child);
+                            }
                         }
                     } else {
                         if(!fsType.mkdir()) {
@@ -123,7 +133,7 @@ public class FSPersistence {
                     }
                 } else {
                     final Set<String> fsChildrenToRemove;
-                    if(fsType.exists()) {
+                    if(fsType.exists() && removeNotOverriden) {
                         fsChildrenToRemove = new HashSet<String>(Arrays.asList(fsType.list()));
                     } else {
                         fsChildrenToRemove = Collections.emptySet();
@@ -149,7 +159,7 @@ public class FSPersistence {
                             }
                         }
                         fsChildrenToRemove.remove(child.getName());
-                        persist(childReg, child, new File(fsType, child.getName()));
+                        persist(childReg, child, new File(fsType, child.getName()), removeNotOverriden);
                     }
 
                     if(!fsChildrenToRemove.isEmpty()) {
@@ -323,18 +333,50 @@ public class FSPersistence {
 
     public static List<ResourceDiff> diff(ImmutableManagementResourceRegistration registration,
             ModelNode address, Resource actual, File dir) throws IOException {
+        return diff(registration, address, actual, dir, false);
+    }
+
+    public static List<ResourceDiff> diff(ImmutableManagementResourceRegistration registration,
+            ModelNode address, Resource actual, File dir, boolean ignoreMissingChildRegistration) throws IOException {
         final ArrayList<ResourceDiff> diff = new ArrayList<ResourceDiff>();
-        diff(registration, address, actual, readResource(dir), diff);
+        diff(registration, address, actual, readResource(dir), diff, ignoreMissingChildRegistration);
         return diff;
     }
 
-    private static void diff(ModelNode address,
-            Resource actual, Resource target, List<ResourceDiff> diffList) {
+    public static List<ResourceDiff> describe(ImmutableManagementResourceRegistration registration,
+            ModelNode address, String type, File dir) throws IOException {
+        final ArrayList<ResourceDiff> diffList = new ArrayList<ResourceDiff>();
+        final Resource resource = readResource(dir);
+        for (Resource.ResourceEntry child : resource.getChildren(type)) {
+            final ModelNode childAddress = address.clone();
+            childAddress.add(type, child.getName());
+            if (registration != null) {
+                final ImmutableManagementResourceRegistration childReg = registration.getSubModel(
+                        PathAddress.pathAddress(type, child.getName()));
+                if (childReg == null) {
+                    childRegistrationIsMissing(childAddress);
+                }
+                if (isPersistent(childReg)) {
+                    diffAddResource(childReg, childAddress, child, diffList);
+                }
+            } else {
+                diffAddResource(null, childAddress, child, diffList);
+            }
+        }
+        return diffList;
+    }
+
+    private static void diff(ModelNode address, Resource actual, Resource target, List<ResourceDiff> diffList) {
         diff(null, address, actual, target, diffList);
     }
 
     private static void diff(ImmutableManagementResourceRegistration registration, ModelNode address,
             Resource actual, Resource target, List<ResourceDiff> diffList) {
+        diff(registration, address, actual, target, diffList, false);
+    }
+
+    private static void diff(ImmutableManagementResourceRegistration registration, ModelNode address,
+            Resource actual, Resource target, List<ResourceDiff> diffList, boolean ignoreMissingChildRegistration) {
         diffAttributes(registration, address, actual.getModel(), target.getModel(), diffList);
 
         final Set<String> targetTypes = new HashSet<String>(target.getChildTypes());
@@ -347,16 +389,17 @@ public class FSPersistence {
                     final PathElement pe = PathElement.pathElement(type, child);
                     final Resource childRes = actual.getChild(pe);
                     if(!FSPersistence.isPersistent(childRes)) {
-                        System.out.println("SKIPPING AS NOT PERSISTENT 1: " + childAddress);
+                        //System.out.println("SKIPPING AS NOT PERSISTENT 1: " + childAddress);
                         continue;
                     }
                     final ImmutableManagementResourceRegistration childReg;
                     if(registration != null) {
                         childReg = registration.getSubModel(PathAddress.pathAddress(type, child));
                         if(childReg == null) {
-                            childRegistrationIsMissing(childAddress);
-                        }
-                        if(!isPersistent(childReg)) {
+                            if(!ignoreMissingChildRegistration) {
+                                childRegistrationIsMissing(childAddress);
+                            }
+                        } else if(!isPersistent(childReg)) {
                             continue;
                         }
                     } else {
@@ -364,9 +407,9 @@ public class FSPersistence {
                     }
 
                     if(targetChildren.remove(child)) {
-                        diff(childReg, childAddress, childRes, target.getChild(pe), diffList);
+                        diff(childReg, childAddress, childRes, target.getChild(pe), diffList, ignoreMissingChildRegistration);
                     } else {
-                        diffRemoveResource(childReg, childAddress, childRes, diffList);
+                        diffRemoveResource(childReg, childAddress, childRes, diffList, ignoreMissingChildRegistration);
                     }
                 }
 
@@ -379,11 +422,15 @@ public class FSPersistence {
                             final ImmutableManagementResourceRegistration childReg = registration.getSubModel(
                                     PathAddress.pathAddress(type, child));
                             if(childReg == null) {
-                                childRegistrationIsMissing(childAddress);
-                            }
-                            if(isPersistent(childReg)) {
+                                if(ignoreMissingChildRegistration) {
+                                    diffAddResource(null, childAddress,
+                                            target.getChild(PathElement.pathElement(type, child)), diffList);
+                                } else {
+                                    childRegistrationIsMissing(childAddress);
+                                }
+                            } else if(isPersistent(childReg)) {
                                 diffAddResource(childReg, childAddress,
-                                        target.getChild(PathElement.pathElement(type, child)), diffList);
+                                        target.getChild(PathElement.pathElement(type, child)), diffList, ignoreMissingChildRegistration);
                             }
                         } else {
                             diffAddResource(null, childAddress,
@@ -397,17 +444,20 @@ public class FSPersistence {
                     final ModelNode childAddress = address.clone();
                     childAddress.add(type, child.getName());
                     if(!FSPersistence.isPersistent(child)) {
-                        System.out.println("SKIPPING AS NOT PERSISTENT 2: " + childAddress);
+                        //System.out.println("SKIPPING AS NOT PERSISTENT 2: " + childAddress);
                         continue;
                     }
                     if(registration != null) {
                         final ImmutableManagementResourceRegistration childReg = registration.getSubModel(
                                 PathAddress.pathAddress(type, child.getName()));
                         if(childReg == null) {
-                            childRegistrationIsMissing(childAddress);
-                        }
-                        if(isPersistent(childReg)) {
-                            diffRemoveResource(childReg, childAddress, child, diffList);
+                            if(ignoreMissingChildRegistration) {
+                                diffRemoveResource(null, childAddress, child, diffList);
+                            } else {
+                                childRegistrationIsMissing(childAddress);
+                            }
+                        } else if(isPersistent(childReg)) {
+                            diffRemoveResource(childReg, childAddress, child, diffList, ignoreMissingChildRegistration);
                         }
                     } else {
                         diffRemoveResource(null, childAddress, child, diffList);
@@ -426,10 +476,13 @@ public class FSPersistence {
                         ImmutableManagementResourceRegistration childReg = registration.getSubModel(
                                 PathAddress.pathAddress(type, child.getName()));
                         if(childReg == null) {
-                            childRegistrationIsMissing(childAddress);
-                        }
-                        if(isPersistent(childReg)) {
-                            diffAddResource(childReg, childAddress, child, diffList);
+                            if(ignoreMissingChildRegistration) {
+                                diffAddResource(null, childAddress, child, diffList);
+                            } else {
+                                childRegistrationIsMissing(childAddress);
+                            }
+                        } else if(isPersistent(childReg)) {
+                            diffAddResource(childReg, childAddress, child, diffList, ignoreMissingChildRegistration);
                         }
                     } else {
                         diffAddResource(null, childAddress, child, diffList);
@@ -441,16 +494,28 @@ public class FSPersistence {
 
     private static void diffAddResource(ImmutableManagementResourceRegistration registration,
             ModelNode address, Resource target, List<ResourceDiff> diffList) {
-        final AddResourceDiff addDiff = ResourceDiff.Factory.add(address);
-        diffList.add(addDiff);
-        if(target.getModel().isDefined()) {
-            final ModelNode model = target.getModel();
-            for(String name : model.keys()) {
-                if(isConfigAttribute(registration, name)) {
-                    addDiff.addDiff(name, model.get(name));
+        diffAddResource(registration, address, target, diffList, false);
+    }
+
+    private static void diffAddResource(ImmutableManagementResourceRegistration registration,
+            ModelNode address, Resource target, List<ResourceDiff> diffList, boolean ignoreMissingChildRegistration) {
+
+        if (registration == null || registration.getOperationEntry(PathAddress.EMPTY_ADDRESS, ModelDescriptionConstants.ADD) != null) {
+            final AddResourceDiff addDiff = ResourceDiff.Factory.add(address);
+            diffList.add(addDiff);
+            if (target.getModel().isDefined()) {
+                final ModelNode model = target.getModel();
+                for (String name : model.keys()) {
+                    if (isConfigAttribute(registration, name) && model.get(name).isDefined()) {
+                        addDiff.addDiff(name, model.get(name));
+                    }
                 }
             }
+        } else {
+            // should the children still be processed?
+            return;
         }
+
         for(String type : target.getChildTypes()) {
             for(Resource.ResourceEntry child : target.getChildren(type)) {
                 final ModelNode childAddress = address.clone();
@@ -459,10 +524,13 @@ public class FSPersistence {
                     final ImmutableManagementResourceRegistration childReg = registration.getSubModel(
                             PathAddress.pathAddress(type, child.getName()));
                     if(childReg == null) {
-                        childRegistrationIsMissing(childAddress);
-                    }
-                    if(isPersistent(childReg)) {
-                        diffAddResource(childReg, childAddress, child, diffList);
+                        if(ignoreMissingChildRegistration) {
+                            diffAddResource(null, childAddress, child, diffList);
+                        } else {
+                            childRegistrationIsMissing(childAddress);
+                        }
+                    } else if(isPersistent(childReg)) {
+                        diffAddResource(childReg, childAddress, child, diffList, ignoreMissingChildRegistration);
                     }
                 } else {
                     diffAddResource(null, childAddress, child, diffList);
@@ -473,6 +541,12 @@ public class FSPersistence {
 
     private static void diffRemoveResource(ImmutableManagementResourceRegistration registration,
             ModelNode address, Resource actual, List<ResourceDiff> diffList) {
+        diffRemoveResource(registration, address, actual, diffList, false);
+    }
+
+    private static void diffRemoveResource(ImmutableManagementResourceRegistration registration,
+            ModelNode address, Resource actual, List<ResourceDiff> diffList, boolean ignoreMissingChildRegistration) {
+
         // remove descendants first
         for(String type : actual.getChildTypes()) {
             for(String child : actual.getChildrenNames(type)) {
@@ -482,11 +556,14 @@ public class FSPersistence {
                     final ImmutableManagementResourceRegistration childReg = registration.getSubModel(
                             PathAddress.pathAddress(type, child));
                     if(childReg == null) {
-                        childRegistrationIsMissing(childAddress);
-                    }
-                    if (isPersistent(childReg)) {
+                        if(ignoreMissingChildRegistration) {
+                            diffRemoveResource(null, childAddress, actual.getChild(PathElement.pathElement(type, child)), diffList);
+                        } else {
+                            childRegistrationIsMissing(childAddress);
+                        }
+                    } else if (isPersistent(childReg)) {
                         diffRemoveResource(childReg, childAddress,
-                                actual.getChild(PathElement.pathElement(type, child)), diffList);
+                                actual.getChild(PathElement.pathElement(type, child)), diffList, ignoreMissingChildRegistration);
                     }
                 } else {
                     diffRemoveResource(null, childAddress, actual.getChild(PathElement.pathElement(type, child)), diffList);
@@ -504,10 +581,10 @@ public class FSPersistence {
         // for now I assume the model nodes should be consistent with regards to the keys
         // otherwise, it's not clear to me what the inconsistency would mean and
         // how to handle it
-        if(!actual.isDefined()) {
+/* TODO review this        if(!actual.isDefined()) {
             throw new IllegalStateException("Actual model is undefined at " + address);
         }
-/* TODO this fell on core-service=management/access=audit/logger=audit-log/handler=file
+*//* TODO this fell on core-service=management/access=audit/logger=audit-log/handler=file
  * the actual was {} and the target undefined
         if(!target.isDefined()) {
             throw new IllegalStateException("Target model is undefined at " + address + " while the actual is " + actual);
@@ -517,14 +594,22 @@ public class FSPersistence {
             final WriteAttributeDiff diff = ResourceDiff.Factory.writeAttribute(address);
             for(String name : registration.getAttributeNames(PathAddress.EMPTY_ADDRESS)) {
                 if(isConfigAttribute(registration, name)) {
+                    final ModelNode actualValue;
                     if(!actual.has(name)) {
-                        throw new IllegalStateException("Configuration attribute " + name + " is not present in the actual model");
+                        actualValue = new ModelNode();
+                        //throw new IllegalStateException("Configuration attribute " + name + " is not present in the actual model");
+                    } else {
+                        actualValue = actual.get(name);
                     }
+                    ModelNode targetValue;
                     if(!target.has(name)) {
-                        throw new IllegalStateException("Configuration attribute " + name + " is not present in the target model");
+                        targetValue = new ModelNode();
+                        //throw new IllegalStateException("Configuration attribute " + name + " is not present in the target model");
+                    } else {
+                        targetValue = target.get(name);
                     }
-                    final ModelNode targetValue = target.get(name);
-                    if(!targetValue.equals(actual.get(name))) {
+                    //final ModelNode targetValue = target.get(name);
+                    if(!targetValue.equals(actualValue)) {
                         diff.addDiff(name, targetValue);
                     }
                 }
@@ -550,6 +635,10 @@ public class FSPersistence {
         diffList.add(diff);
     }
 
+    static boolean isPersistent(Resource resource, final ImmutableManagementResourceRegistration registration) {
+        return isPersistent(resource) && (registration == null || isPersistent(registration));
+    }
+
     static boolean isPersistent(Resource res) {
         return !res.isProxy() && !res.isRuntime();
     }
@@ -558,8 +647,7 @@ public class FSPersistence {
         return !registration.isAlias() && !registration.isRemote() && !registration.isRuntimeOnly();
     }
 
-    private static boolean isConfigAttribute(ImmutableManagementResourceRegistration registration,
-            String name) {
+    private static boolean isConfigAttribute(ImmutableManagementResourceRegistration registration, String name) {
         if(registration == null) {
             return true;
         }

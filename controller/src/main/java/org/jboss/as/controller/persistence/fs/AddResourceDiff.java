@@ -37,7 +37,7 @@ class AddResourceDiff extends ResourceDiffWithAttributes {
     }
 
     @Override
-    protected ModelNode toOperationRequest() {
+    public ModelNode toOperationRequest() {
         if(attributes.isEmpty()) {
             return getAddressedRequest();
         }

@@ -60,7 +60,7 @@ public class PersistToFSStepHandler implements OperationStepHandler {
 
         final ImmutableManagementResourceRegistration registration = context.getResourceRegistration();
         final Resource resource = context.readResource(PathAddress.EMPTY_ADDRESS);
-        if(FSPersistence.isPersistent(registration) && FSPersistence.isPersistent(resource)) {
+        if(FSPersistence.isPersistent(resource, registration)) {
             try {
                 FSPersistence.persist(registration, resource, dir);
             } catch (IOException e) {

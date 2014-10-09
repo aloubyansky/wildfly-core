@@ -403,6 +403,7 @@ public final class ServerService extends AbstractControllerService {
 
     @Override
     protected void performControllerInitialization(ServiceTarget target, ManagementModel managementModel) {
+
         final ServiceLoader<ModelControllerServiceInitialization> sl = ServiceLoader.load(ModelControllerServiceInitialization.class);
         final Iterator<ModelControllerServiceInitialization> iterator = sl.iterator();
         while(iterator.hasNext()) {

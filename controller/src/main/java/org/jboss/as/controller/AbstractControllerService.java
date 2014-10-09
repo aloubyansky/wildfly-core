@@ -25,6 +25,7 @@ package org.jboss.as.controller;
 import static org.jboss.as.controller.logging.ControllerLogger.ROOT_LOGGER;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.RejectedExecutionException;
@@ -38,14 +39,18 @@ import org.jboss.as.controller.client.OperationAttachments;
 import org.jboss.as.controller.client.OperationMessageHandler;
 import org.jboss.as.controller.client.OperationResponse;
 import org.jboss.as.controller.descriptions.DescriptionProvider;
+import org.jboss.as.controller.descriptions.ModelDescriptionConstants;
 import org.jboss.as.controller.extension.MutableRootResourceRegistrationProvider;
 import org.jboss.as.controller.logging.ControllerLogger;
 import org.jboss.as.controller.notification.NotificationSupport;
 import org.jboss.as.controller.persistence.ConfigurationPersistenceException;
 import org.jboss.as.controller.persistence.ConfigurationPersister;
+import org.jboss.as.controller.persistence.fs.FSPersistence;
+import org.jboss.as.controller.persistence.fs.ResourceDiff;
 import org.jboss.as.controller.registry.ManagementResourceRegistration;
 import org.jboss.as.controller.registry.Resource;
 import org.jboss.dmr.ModelNode;
+import org.jboss.dmr.Property;
 import org.jboss.msc.service.Service;
 import org.jboss.msc.service.ServiceContainer;
 import org.jboss.msc.service.ServiceController;
@@ -301,7 +306,64 @@ public abstract class AbstractControllerService implements Service<ModelControll
     }
 
     protected boolean boot(List<ModelNode> bootOperations, boolean rollbackOnRuntimeFailure) throws ConfigurationPersistenceException {
-        return controller.boot(bootOperations, OperationMessageHandler.logging, ModelController.OperationTransactionControl.COMMIT, rollbackOnRuntimeFailure);
+        final boolean boot = bootFromFS2(rollbackOnRuntimeFailure);
+//        final boolean boot = controller.boot(bootOperations, OperationMessageHandler.logging, ModelController.OperationTransactionControl.COMMIT, rollbackOnRuntimeFailure);
+        return boot;
+    }
+
+    boolean bootFromFS2(boolean rollbackOnRuntimeFailure) {
+
+        final List<ModelNode> extensions = new ArrayList<ModelNode>();
+        final List<ModelNode> fsBootOps = new ArrayList<ModelNode>();
+
+        boolean sawJSONFormatter = false;
+        ModelNode auditFileHandlerOp = null;
+        final ModelNode auditFileHandler = new ModelNode().setEmptyList();
+        auditFileHandler.add(ModelDescriptionConstants.CORE_SERVICE, ModelDescriptionConstants.MANAGEMENT);
+        auditFileHandler.add(ModelDescriptionConstants.ACCESS, ModelDescriptionConstants.AUDIT);
+        final ModelNode jsonFormatter = auditFileHandler.clone();
+        auditFileHandler.add(ModelDescriptionConstants.FILE_HANDLER, ModelDescriptionConstants.FILE);
+        jsonFormatter.add(ModelDescriptionConstants.JSON_FORMATTER, ModelDescriptionConstants.JSON_FORMATTER);
+
+        try {
+            for(ResourceDiff diff : FSPersistence.diff(controller.getManagementModel().getRootResourceRegistration(),
+                    new ModelNode().setEmptyList(), controller.getManagementModel().getRootResource(),
+                    new java.io.File("/home/avoka/git/fs-persistence"), true)) {
+                final List<Property> address = diff.getAddress().asPropertyList();
+                if(!address.isEmpty()) {
+                    if(address.get(0).getName().equals(ModelDescriptionConstants.EXTENSION)) {
+                        extensions.add(diff.toOperationRequest());
+                    } else {
+                        if(!sawJSONFormatter) {
+                            if (diff.getAddress().equals(auditFileHandler)) {
+                                auditFileHandlerOp = diff.toOperationRequest();
+                            } else {
+                                fsBootOps.add(diff.toOperationRequest());
+                                if (jsonFormatter.equals(diff.getAddress())) {
+                                    sawJSONFormatter = true;
+                                    if (auditFileHandlerOp != null) {
+                                        fsBootOps.add(auditFileHandlerOp);
+                                    }
+                                }
+                            }
+                        } else {
+                            fsBootOps.add(diff.toOperationRequest());
+                        }
+                    }
+                } else {
+                    fsBootOps.add(diff.toOperationRequest());
+                }
+            }
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        fsBootOps.addAll(0, extensions);
+
+        final boolean boot = controller.boot(fsBootOps, OperationMessageHandler.logging, ModelController.OperationTransactionControl.COMMIT, rollbackOnRuntimeFailure);
+        System.out.println("BOOTED : " + boot);
+        return boot;
+
     }
 
     /** @deprecated internal use only  only for use by legacy test controllers */

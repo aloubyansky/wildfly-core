@@ -268,7 +268,7 @@ public class ServerRootResourceDefinition extends SimpleResourceDefinition {
         resourceRegistration.registerOperationHandler(SchemaLocationRemoveHandler.DEFINITION, SchemaLocationRemoveHandler.INSTANCE);
         resourceRegistration.registerOperationHandler(ValidateAddressOperationHandler.DEFINITION, ValidateAddressOperationHandler.INSTANCE, false);
 
-        java.io.File fsPersistenceDir = new java.io.File("fs-persistence");
+        java.io.File fsPersistenceDir = new java.io.File("/home/avoka/git/fs-persistence");
         resourceRegistration.registerOperationHandler(PersistToFSStepHandler.DEFINITION, new PersistToFSStepHandler(fsPersistenceDir));
         resourceRegistration.registerOperationHandler(SyncWithFSStepHandler.DEFINITION, new SyncWithFSStepHandler(fsPersistenceDir));
 

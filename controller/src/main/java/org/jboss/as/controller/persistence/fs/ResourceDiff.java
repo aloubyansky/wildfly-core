@@ -33,7 +33,7 @@ import org.jboss.dmr.ModelNode;
  *
  * @author Alexey Loubyansky
  */
-interface ResourceDiff {
+public interface ResourceDiff {
 
     /**
      * Returns the absolute address for this diff
@@ -42,15 +42,15 @@ interface ResourceDiff {
      */
     ModelNode getAddress();
 
-/*    *//**
+    /**
      * Returns an operation request which should be executed
      * to eliminate the difference this instance represents.
      *
      * @return  operation request to eliminate the difference
      * represented by this instance
-     *//*
+     */
     ModelNode toOperationRequest();
-*/
+
     /**
      * Adds the operations and their handlers that should be executed
      * to bring the resource in sync with its persistent state on the filesystem
