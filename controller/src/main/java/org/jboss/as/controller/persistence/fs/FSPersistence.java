@@ -52,6 +52,9 @@ public class FSPersistence {
 
     public static final String RESOURCE_FILE_NAME = "attributes.dmr";
 
+    /** file system name escape character */
+    private static final char ESCAPE_CHAR = '%';
+
     /**
      * Persists the resource to the file system directory.
      * The resource will not be persisted if it is a proxy or if it is
@@ -144,22 +147,32 @@ public class FSPersistence {
                             continue;
                         }
                         final ImmutableManagementResourceRegistration childReg;
+                        final String childName = child.getName();
+                        if(childName.trim().isEmpty()) {
+                            throw new IllegalStateException("Child name is empty. Resource type " + resType + ", path '" + dir.getAbsolutePath() + "'");
+                        }
                         if(registration == null) {
                             childReg = null;
                         } else {
                             childReg = registration.getSubModel(
-                                PathAddress.pathAddress(PathElement.pathElement(resType, child.getName())));
+                                PathAddress.pathAddress(PathElement.pathElement(resType, childName)));
                             if (childReg == null) {
                                 throw new IllegalStateException("Child not registered: type="
                                         + resType + ", name="
-                                        + child.getName());
+                                        + childName);
                             }
                             if(!isPersistent(childReg)) {
                                 continue;
                             }
                         }
-                        fsChildrenToRemove.remove(child.getName());
-                        persist(childReg, child, new File(fsType, child.getName()), removeNotOverriden);
+                        fsChildrenToRemove.remove(childName);
+                        final String childDirName = encodeDirName(childName);
+                        final File childDir = new File(fsType, childDirName);
+                        if(childDir.getName().trim().isEmpty()) {
+                            throw new IllegalStateException("Empty dir name: '" + childDir.getAbsolutePath() + "', '"
+                        + fsType.getAbsolutePath() + "', '" + childName + "'");
+                        }
+                        persist(childReg, child, childDir, removeNotOverriden);
                     }
 
                     if(!fsChildrenToRemove.isEmpty()) {
@@ -224,9 +237,15 @@ public class FSPersistence {
                 final File[] children = type.listFiles();
                 for(File child : children) {
                     if(child.isDirectory()) {
+                        try {
                         resource.registerChild(
-                                PathElement.pathElement(type.getName(), child.getName()),
+                                PathElement.pathElement(decodeDirName(type.getName()), decodeDirName(child.getName())),
                                 readResource(child));
+                        } catch(StringIndexOutOfBoundsException e) {
+                            System.out.println("'" + type.getName() + "' -> '" + decodeDirName(type.getName()) + "', '" +
+                                child.getName() + "' -> '" + decodeDirName(child.getName()) + "'");
+                            throw e;
+                        }
                     } else {
                         // this is strict wrt to the content but it can always be relaxed later
                         throw new IllegalStateException("Unexpected file " + child.getAbsolutePath());
@@ -245,6 +264,9 @@ public class FSPersistence {
      * @throws IOException
      */
     public static void writeResourceFile(File dir, ModelNode model) throws IOException {
+        if(dir.getName().trim().isEmpty()) {
+            throw new IllegalStateException("'" + dir.getAbsolutePath() + "'");
+        }
         if(model == null) {
             throw new IllegalArgumentException("Model is null");
         }
@@ -343,7 +365,7 @@ public class FSPersistence {
         diff(registration, address, actual, readResource(dir), diff, ignoreMissingChildRegistration);
         return diff;
     }
-
+/*
     public static List<ResourceDiff> describe(ImmutableManagementResourceRegistration registration,
             ModelNode address, String type, File dir) throws IOException {
         final ArrayList<ResourceDiff> diffList = new ArrayList<ResourceDiff>();
@@ -366,7 +388,7 @@ public class FSPersistence {
         }
         return diffList;
     }
-
+*/
     private static void diff(ModelNode address, Resource actual, Resource target, List<ResourceDiff> diffList) {
         diff(null, address, actual, target, diffList);
     }
@@ -389,7 +411,7 @@ public class FSPersistence {
                     childAddress.add(type, child);
                     final PathElement pe = PathElement.pathElement(type, child);
                     final Resource childRes = actual.getChild(pe);
-                    if(!FSPersistence.isPersistent(childRes)) {
+                    if(!isPersistent(childRes)) {
                         //System.out.println("SKIPPING AS NOT PERSISTENT 1: " + childAddress);
                         continue;
                     }
@@ -444,7 +466,7 @@ public class FSPersistence {
                 for(Resource.ResourceEntry child : actual.getChildren(type)) {
                     final ModelNode childAddress = address.clone();
                     childAddress.add(type, child.getName());
-                    if(!FSPersistence.isPersistent(child)) {
+                    if(!isPersistent(child)) {
                         //System.out.println("SKIPPING AS NOT PERSISTENT 2: " + childAddress);
                         continue;
                     }
@@ -663,5 +685,77 @@ public class FSPersistence {
 
     static void childRegistrationIsMissing(final ModelNode childAddress) {
         throw new IllegalStateException("Registration is missing for child resource " + childAddress);
+    }
+
+    private static String encodeDirName(String name) {
+
+        for(int i = 0; i < name.length(); ++i) {
+            char ch = name.charAt(i);
+            if (ch < ' ' || ch >= 0x7F || ch == File.separatorChar
+                    || (ch == '.' && i == 0) // we don't want to collide with "." or ".."!
+                    || ch == ESCAPE_CHAR) {
+
+                final StringBuilder builder = new StringBuilder();
+                if(i > 0) {
+                    builder.append(name, 0, i);
+                }
+                builder.append(ESCAPE_CHAR);
+                if (ch < 0x10) {
+                    builder.append('0');
+                }
+                builder.append(Integer.toHexString(ch));
+
+                for (int j = i + 1; j < name.length(); j++) {
+                    ch = name.charAt(j);
+                    if (ch < ' ' || ch >= 0x7F || ch == File.separatorChar
+                            || (ch == '.' && j == 0) // we don't want to collide with "." or ".."!
+                            || ch == ESCAPE_CHAR) {
+                        builder.append(ESCAPE_CHAR);
+                        if (ch < 0x10) {
+                            builder.append('0');
+                        }
+                        builder.append(Integer.toHexString(ch));
+                    } else {
+                        builder.append(ch);
+                    }
+                }
+                //System.out.println("encoded '" + name + "' to '" + builder.toString() + "'");
+                return builder.toString();
+            }
+        }
+        return name;
+    }
+
+    private static String decodeDirName(String name) {
+        for(int i = 0; i < name.length(); ++i) {
+            if(name.charAt(i) == ESCAPE_CHAR) {
+                char ch = name.charAt(i);
+                final StringBuilder builder = new StringBuilder(name.length());
+                if(i > 0) {
+                    builder.append(name, 0, i);
+                }
+                int j = i + 1;
+                if(j < name.length()) {
+                    if(j + 1 >= name.length()) {
+                        throw new IllegalStateException("Unexpected escpaing sequence '" + name + "' at " + j);
+                    }
+                    builder.append((char)Integer.decode("0x" + name.charAt(j++) + name.charAt(j++)).intValue());
+                }
+                while(j < name.length()) {
+                    ch = name.charAt(j++);
+                    if(ch == ESCAPE_CHAR) {
+                        if(j + 1 >= name.length()) {
+                            throw new IllegalStateException("Unexpected escpaing sequence '" + name + "' at " + j);
+                        }
+                        builder.append((char)Integer.decode("0x" + name.charAt(j++) + name.charAt(j++)).intValue());
+                    } else {
+                        builder.append(ch);
+                    }
+                }
+                //System.out.println("decoded '" + name + "' to '" + builder.toString() + "'");
+                return builder.toString();
+            }
+        }
+        return name;
     }
 }
