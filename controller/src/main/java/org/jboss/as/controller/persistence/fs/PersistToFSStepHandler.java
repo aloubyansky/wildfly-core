@@ -59,7 +59,7 @@ public class PersistToFSStepHandler implements OperationStepHandler {
     public void execute(OperationContext context, ModelNode operation) throws OperationFailedException {
 
         final ImmutableManagementResourceRegistration registration = context.getResourceRegistration();
-        final Resource resource = context.readResource(PathAddress.EMPTY_ADDRESS);
+        final Resource resource = context.readResource(PathAddress.EMPTY_ADDRESS, true);
         if(FSPersistence.isPersistent(resource, registration)) {
             try {
                 FSPersistence.persist(registration, resource, dir);

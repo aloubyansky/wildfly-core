@@ -181,7 +181,8 @@ public class FSPersistence {
         if(registration != null && resourceModel.isDefined()) {
             final ModelNode configModel = new ModelNode();
             for(String attr : resourceModel.keys()) {
-                if(isConfigAttribute(registration, attr)) {
+                if(!res.getChildTypes().contains(attr) && // TODO this check indicates we need to clean the model up
+                        isConfigAttribute(registration, attr, dir + " " + res.getChildTypes())) {
                     configModel.get(attr).set(resourceModel.get(attr));
                 }
             }
@@ -228,7 +229,7 @@ public class FSPersistence {
                                 readResource(child));
                     } else {
                         // this is strict wrt to the content but it can always be relaxed later
-                        throw new IllegalStateException("Unexpected file: " + type.getAbsolutePath());
+                        throw new IllegalStateException("Unexpected file " + child.getAbsolutePath());
                     }
                 }
             }
@@ -506,7 +507,7 @@ public class FSPersistence {
             if (target.getModel().isDefined()) {
                 final ModelNode model = target.getModel();
                 for (String name : model.keys()) {
-                    if (isConfigAttribute(registration, name) && model.get(name).isDefined()) {
+                    if (isConfigAttribute(registration, name, address) && model.get(name).isDefined()) {
                         addDiff.addDiff(name, model.get(name));
                     }
                 }
@@ -593,7 +594,7 @@ public class FSPersistence {
         if(registration != null) {
             final WriteAttributeDiff diff = ResourceDiff.Factory.writeAttribute(address);
             for(String name : registration.getAttributeNames(PathAddress.EMPTY_ADDRESS)) {
-                if(isConfigAttribute(registration, name)) {
+                if(isConfigAttribute(registration, name, address)) {
                     final ModelNode actualValue;
                     if(!actual.has(name)) {
                         actualValue = new ModelNode();
@@ -647,13 +648,15 @@ public class FSPersistence {
         return !registration.isAlias() && !registration.isRemote() && !registration.isRuntimeOnly();
     }
 
-    private static boolean isConfigAttribute(ImmutableManagementResourceRegistration registration, String name) {
+    private static boolean isConfigAttribute(ImmutableManagementResourceRegistration registration, String name, Object location) {
         if(registration == null) {
             return true;
         }
         final AttributeAccess access = registration.getAttributeAccess(PathAddress.EMPTY_ADDRESS, name);
         if(access == null) {
-            throw new IllegalStateException("Attribute access is not specified for " + name);
+            // TODO
+            //throw new IllegalStateException("Attribute access is not specified for " + name + " at " + location);
+            return false;
         }
         return access.getStorageType() == AttributeAccess.Storage.CONFIGURATION;
     }
