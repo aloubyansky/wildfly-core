@@ -26,7 +26,9 @@ import static org.jboss.as.controller.logging.ControllerLogger.ROOT_LOGGER;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.RejectedExecutionException;
 
@@ -306,17 +308,84 @@ public abstract class AbstractControllerService implements Service<ModelControll
     }
 
     protected boolean boot(List<ModelNode> bootOperations, boolean rollbackOnRuntimeFailure) throws ConfigurationPersistenceException {
-        final boolean boot = bootFromFS2(rollbackOnRuntimeFailure);
-//        final boolean boot = controller.boot(bootOperations, OperationMessageHandler.logging, ModelController.OperationTransactionControl.COMMIT, rollbackOnRuntimeFailure);
+//        System.out.println("ORIGINAL BOOT OPS: " + bootOperations.size());
+        List<ModelNode> fsOps = bootFromFS2(bootOperations.get(bootOperations.size() - 1));
+//        fsOps = reorder(bootOperations, fsOps);
+//        System.out.println("BOOT OPS: " + fsOps.size());
+//      final boolean boot = controller.boot(bootOperations, OperationMessageHandler.logging, ModelController.OperationTransactionControl.COMMIT, rollbackOnRuntimeFailure);
+        final boolean boot = controller.boot(fsOps, OperationMessageHandler.logging, ModelController.OperationTransactionControl.COMMIT, rollbackOnRuntimeFailure);
         return boot;
     }
 
-    boolean bootFromFS2(boolean rollbackOnRuntimeFailure) {
+    List<ModelNode> reorder(List<ModelNode> original, List<ModelNode> fs) {
 
-        final List<ModelNode> extensions = new ArrayList<ModelNode>();
+        Map<OpKey, ModelNode> fsMap = new HashMap<OpKey, ModelNode>(fs.size());
+        for(ModelNode op : fs) {
+            fsMap.put(new OpKey(op), op);
+        }
+
+        final StringBuilder buf = new StringBuilder();
+        List<ModelNode> sorted = new ArrayList<ModelNode>(fs.size());
+        for(int i = 0; i < original.size(); ++i) {
+            final OpKey originalKey = new OpKey(original.get(i));
+            sorted.add(fsMap.get(originalKey));
+
+            for(Property prop : originalKey.address.asPropertyList()) {
+                buf.append('/').append(prop.getName()).append('=').append(prop.getValue().asString());
+            }
+            buf.append("\n");
+        }
+        System.out.println(buf.toString());
+        return sorted;
+    }
+
+    static class OpKey {
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = 1;
+            result = prime * result + ((address == null) ? 0 : address.hashCode());
+            result = prime * result + ((opName == null) ? 0 : opName.hashCode());
+            return result;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj)
+                return true;
+            if (obj == null)
+                return false;
+            if (getClass() != obj.getClass())
+                return false;
+            OpKey other = (OpKey) obj;
+            if (address == null) {
+                if (other.address != null)
+                    return false;
+            } else if (!address.equals(other.address))
+                return false;
+            if (opName == null) {
+                if (other.opName != null)
+                    return false;
+            } else if (!opName.equals(other.opName))
+                return false;
+            return true;
+        }
+
+        final ModelNode address;
+        final String opName;
+
+        OpKey(ModelNode op) {
+            address = op.get(ModelDescriptionConstants.ADDRESS);
+            opName = op.get(ModelDescriptionConstants.OP).asString();
+        }
+    }
+
+    List<ModelNode> bootFromFS2(ModelNode addDeployerChains) {
+
+//        final List<ModelNode> extensions = new ArrayList<ModelNode>();
         final List<ModelNode> fsBootOps = new ArrayList<ModelNode>();
 
-        boolean sawJSONFormatter = false;
+/*        boolean sawJSONFormatter = false;
         ModelNode auditFileHandlerOp = null;
         final ModelNode auditFileHandler = new ModelNode().setEmptyList();
         auditFileHandler.add(ModelDescriptionConstants.CORE_SERVICE, ModelDescriptionConstants.MANAGEMENT);
@@ -324,12 +393,12 @@ public abstract class AbstractControllerService implements Service<ModelControll
         final ModelNode jsonFormatter = auditFileHandler.clone();
         auditFileHandler.add(ModelDescriptionConstants.FILE_HANDLER, ModelDescriptionConstants.FILE);
         jsonFormatter.add(ModelDescriptionConstants.JSON_FORMATTER, ModelDescriptionConstants.JSON_FORMATTER);
-
+*/
         try {
             for(ResourceDiff diff : FSPersistence.diff(controller.getManagementModel().getRootResourceRegistration(),
                     new ModelNode().setEmptyList(), controller.getManagementModel().getRootResource(),
                     new java.io.File("/home/avoka/git/fs-persistence"), true)) {
-                final List<Property> address = diff.getAddress().asPropertyList();
+  /*              final List<Property> address = diff.getAddress().asPropertyList();
                 if(!address.isEmpty()) {
                     if(address.get(0).getName().equals(ModelDescriptionConstants.EXTENSION)) {
                         extensions.add(diff.toOperationRequest());
@@ -350,19 +419,17 @@ public abstract class AbstractControllerService implements Service<ModelControll
                             fsBootOps.add(diff.toOperationRequest());
                         }
                     }
-                } else {
+                } else {*/
                     fsBootOps.add(diff.toOperationRequest());
-                }
+//                }
             }
         } catch (IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
-        fsBootOps.addAll(0, extensions);
-
-        final boolean boot = controller.boot(fsBootOps, OperationMessageHandler.logging, ModelController.OperationTransactionControl.COMMIT, rollbackOnRuntimeFailure);
-        System.out.println("BOOTED : " + boot);
-        return boot;
+//        fsBootOps.addAll(0, extensions);
+        fsBootOps.add(addDeployerChains);
+        return fsBootOps;
 
     }
 

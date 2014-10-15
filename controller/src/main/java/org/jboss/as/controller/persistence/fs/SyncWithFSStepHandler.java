@@ -72,13 +72,13 @@ public class SyncWithFSStepHandler implements OperationStepHandler {
 
             if(!diffs.isEmpty()) {
                 try {
-                for(ResourceDiff diff : diffs) {
-                    diff.addStepHandlers(context, registration);
-                }
-                } catch(OperationFailedException e) {
+                    for (ResourceDiff diff : diffs) {
+                        diff.addStepHandlers(context, registration);
+                    }
+                } catch (OperationFailedException e) {
                     e.printStackTrace();
                     throw e;
-                } catch(Throwable t) {
+                } catch (Throwable t) {
                     t.printStackTrace();
                     throw new OperationFailedException("Failed to add step handlers", t);
                 }

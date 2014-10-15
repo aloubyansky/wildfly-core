@@ -22,8 +22,11 @@
 
 package org.jboss.as.controller.persistence.fs;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileFilter;
 import java.io.FileInputStream;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.FilenameFilter;
 import java.io.IOException;
@@ -51,6 +54,7 @@ import org.jboss.dmr.ModelNode;
 public class FSPersistence {
 
     public static final String RESOURCE_FILE_NAME = "attributes.dmr";
+    public static final String ORDER_FILE_NAME = "order.txt";
 
     /** file system name escape character */
     private static final char ESCAPE_CHAR = '%';
@@ -104,7 +108,7 @@ public class FSPersistence {
                     fsTypesToRemove = new HashSet<String>(Arrays.asList(dir.list(new FilenameFilter() {
                         @Override
                         public boolean accept(File dir, String name) {
-                            return !name.equals(RESOURCE_FILE_NAME);
+                            return !name.equals(RESOURCE_FILE_NAME) && !name.equals(ORDER_FILE_NAME);
                         }
                     })));
                 } else {
@@ -228,7 +232,7 @@ public class FSPersistence {
 
         for(File type : dir.listFiles()) {
             if(!type.isDirectory()) {
-                if(!RESOURCE_FILE_NAME.equals(type.getName())) {
+                if(!RESOURCE_FILE_NAME.equals(type.getName()) && !ORDER_FILE_NAME.equals(type.getName())) {
                     // this is strict wrt to the content but it can always be relaxed later
                     throw new IllegalStateException("Unexpected file: " + type.getAbsolutePath());
                 }
@@ -362,10 +366,12 @@ public class FSPersistence {
     public static List<ResourceDiff> diff(ImmutableManagementResourceRegistration registration,
             ModelNode address, Resource actual, File dir, boolean ignoreMissingChildRegistration) throws IOException {
         final ArrayList<ResourceDiff> diff = new ArrayList<ResourceDiff>();
-        diff(registration, address, actual, readResource(dir), diff, ignoreMissingChildRegistration);
+        //diff(registration, address, actual, readResource(dir), diff, ignoreMissingChildRegistration);
+        diff(registration, address, actual, dir, diff, ignoreMissingChildRegistration);
         return diff;
     }
-/*
+
+    /*
     public static List<ResourceDiff> describe(ImmutableManagementResourceRegistration registration,
             ModelNode address, String type, File dir) throws IOException {
         final ArrayList<ResourceDiff> diffList = new ArrayList<ResourceDiff>();
@@ -562,6 +568,50 @@ public class FSPersistence {
         }
     }
 
+    private static void diffAddResource(ImmutableManagementResourceRegistration registration,
+            ModelNode address, File targetDir, List<ResourceDiff> diffList, boolean ignoreMissingChildRegistration) throws IOException {
+
+        if (registration == null || registration.getOperationEntry(PathAddress.EMPTY_ADDRESS, ModelDescriptionConstants.ADD) != null) {
+            final AddResourceDiff addDiff = ResourceDiff.Factory.add(address);
+            diffList.add(addDiff);
+            final ModelNode targetModel = readResourceFile(targetDir);
+            if (targetModel.isDefined()) {
+                for (String name : targetModel.keys()) {
+                    if (isConfigAttribute(registration, name, address) && targetModel.get(name).isDefined()) {
+                        addDiff.addDiff(name, targetModel.get(name));
+                    }
+                }
+            }
+        } else {
+            // should the children still be processed?
+            return;
+        }
+
+        for(File typeDir : listOrderedDirs(targetDir)) {
+            final String targetType = decodeDirName(typeDir.getName());
+            for(File childDir : listOrderedDirs(typeDir)) {
+                final String targetChild = decodeDirName(childDir.getName());
+                final ModelNode childAddress = address.clone();
+                childAddress.add(targetType, targetChild);
+                if(registration != null) {
+                    final ImmutableManagementResourceRegistration childReg = registration.getSubModel(
+                            PathAddress.pathAddress(targetType, targetChild));
+                    if(childReg == null) {
+                        if(ignoreMissingChildRegistration) {
+                            diffAddResource(null, childAddress, childDir, diffList, ignoreMissingChildRegistration);
+                        } else {
+                            childRegistrationIsMissing(childAddress);
+                        }
+                    } else if(isPersistent(childReg)) {
+                        diffAddResource(childReg, childAddress, childDir, diffList, ignoreMissingChildRegistration);
+                    }
+                } else {
+                    diffAddResource(null, childAddress, childDir, diffList, ignoreMissingChildRegistration);
+                }
+            }
+        }
+    }
+
     private static void diffRemoveResource(ImmutableManagementResourceRegistration registration,
             ModelNode address, Resource actual, List<ResourceDiff> diffList) {
         diffRemoveResource(registration, address, actual, diffList, false);
@@ -656,6 +706,317 @@ public class FSPersistence {
             }
         }
         diffList.add(diff);
+    }
+
+    // TODO
+    private static void diff(ImmutableManagementResourceRegistration registration, ModelNode address,
+            Resource actual, File targetDir, List<ResourceDiff> diffList, boolean ignoreMissingChildRegistration) throws IOException {
+
+        diffAttributes(registration, address, actual.getModel(), readResourceFile(targetDir), diffList);
+
+        final Set<String> actualTypes = new HashSet<String>(actual.getChildTypes());
+        for(File typeDir : listOrderedDirs(targetDir)) {
+            final String targetType = decodeDirName(typeDir.getName());
+            if(actualTypes.remove(targetType)) {
+                final Set<String> actualChildren = new HashSet<String>(actual.getChildrenNames(targetType));
+                for(File childDir : listOrderedDirs(typeDir)) {
+                    final String targetChild = decodeDirName(childDir.getName());
+                    final ModelNode childAddress = address.clone();
+                    childAddress.add(targetType, targetChild);
+
+                    final ImmutableManagementResourceRegistration childReg;
+                    if(registration != null) {
+                        childReg = registration.getSubModel(PathAddress.pathAddress(targetType, targetChild));
+                        if(childReg == null) {
+                            if(!ignoreMissingChildRegistration) {
+                                childRegistrationIsMissing(childAddress);
+                            }
+                        } else if(!isPersistent(childReg)) {
+                            continue;
+                        }
+                    } else {
+                        childReg = null;
+                    }
+
+                    if(actualChildren.remove(targetChild)) {
+                        final PathElement pe = PathElement.pathElement(targetType, targetChild);
+                        final Resource childRes = actual.getChild(pe);
+                        if(childRes == null) {
+                            throw new IllegalStateException("Child resource is null");
+                        }
+                        if(!isPersistent(childRes)) {
+                            //System.out.println("SKIPPING AS NOT PERSISTENT 1: " + childAddress);
+                            continue;
+                        }
+                        diff(childReg, childAddress, childRes, childDir, diffList, ignoreMissingChildRegistration);
+                    } else {
+                        diffAddResource(childReg, childAddress, childDir, diffList, ignoreMissingChildRegistration);
+                    }
+                }
+
+                if(!actualChildren.isEmpty()) {
+                    // remove
+                    for(String childName : actualChildren) {
+                        final Resource child = actual.getChild(PathElement.pathElement(targetType, childName));
+                        if(!isPersistent(child)) {
+                            continue;
+                        }
+                        final ModelNode childAddress = address.clone();
+                        childAddress.add(targetType, childName);
+                        if(registration != null) {
+                            final ImmutableManagementResourceRegistration childReg = registration.getSubModel(
+                                    PathAddress.pathAddress(targetType, childName));
+                            if(childReg == null) {
+                                if(ignoreMissingChildRegistration) {
+                                    diffRemoveResource(null, childAddress, child, diffList);
+                                } else {
+                                    childRegistrationIsMissing(childAddress);
+                                }
+                            } else if(isPersistent(childReg)) {
+                                diffRemoveResource(childReg, childAddress, child, diffList, ignoreMissingChildRegistration);
+                            }
+                        } else {
+                            diffRemoveResource(null, childAddress, child, diffList);
+                        }
+                    }
+                }
+            } else {
+                // add
+                for(File childDir : listOrderedDirs(typeDir)) {
+                    final String targetChild = decodeDirName(childDir.getName());
+                    final ModelNode childAddress = address.clone();
+                    childAddress.add(targetType, targetChild);
+
+                    final ImmutableManagementResourceRegistration childReg;
+                    if(registration != null) {
+                        childReg = registration.getSubModel(PathAddress.pathAddress(targetType, targetChild));
+                        if(childReg == null) {
+                            if(!ignoreMissingChildRegistration) {
+                                childRegistrationIsMissing(childAddress);
+                            }
+                        } else if(!isPersistent(childReg)) {
+                            continue;
+                        }
+                    } else {
+                        childReg = null;
+                    }
+                    diffAddResource(childReg, childAddress, childDir, diffList, ignoreMissingChildRegistration);
+                }
+            }
+        }
+
+        if(!actualTypes.isEmpty()) {
+            // remove
+            for (String type : actualTypes) {
+                for (String childName : actual.getChildrenNames(type)) {
+                    final Resource child = actual.getChild(PathElement.pathElement(type, childName));
+                    if(!isPersistent(child)) {
+                        continue;
+                    }
+                    final ModelNode childAddress = address.clone();
+                    childAddress.add(type, childName);
+                    if (registration != null) {
+                        final ImmutableManagementResourceRegistration childReg = registration.getSubModel(PathAddress
+                                .pathAddress(type, childName));
+                        if (childReg == null) {
+                            if (ignoreMissingChildRegistration) {
+                                diffRemoveResource(null, childAddress, child, diffList);
+                            } else {
+                                childRegistrationIsMissing(childAddress);
+                            }
+                        } else if (isPersistent(childReg)) {
+                            diffRemoveResource(childReg, childAddress, child, diffList, ignoreMissingChildRegistration);
+                        }
+                    } else {
+                        diffRemoveResource(null, childAddress, child, diffList);
+                    }
+                }
+            }
+        }
+
+        /*
+        final Set<String> targetTypes = new HashSet<String>(Arrays.asList(targetDir.list()));
+        for(String type : actual.getChildTypes()) {
+            final String typeDirName = encodeDirName(type);
+            if(targetTypes.remove(typeDirName)) {
+                final File typeDir = new File(targetDir, typeDirName);
+                final Set<String> targetChildren = new HashSet<String>(Arrays.asList(typeDir.list(new FilenameFilter(){
+                    @Override
+                    public boolean accept(File dir, String name) {
+                        return new File(dir, name).isDirectory();
+                    }})));
+                for(String child : actual.getChildrenNames(type)) {
+                    final ModelNode childAddress = address.clone();
+                    childAddress.add(type, child);
+                    final PathElement pe = PathElement.pathElement(type, child);
+                    final Resource childRes = actual.getChild(pe);
+                    if(!isPersistent(childRes)) {
+                        //System.out.println("SKIPPING AS NOT PERSISTENT 1: " + childAddress);
+                        continue;
+                    }
+                    final ImmutableManagementResourceRegistration childReg;
+                    if(registration != null) {
+                        childReg = registration.getSubModel(PathAddress.pathAddress(type, child));
+                        if(childReg == null) {
+                            if(!ignoreMissingChildRegistration) {
+                                childRegistrationIsMissing(childAddress);
+                            }
+                        } else if(!isPersistent(childReg)) {
+                            continue;
+                        }
+                    } else {
+                        childReg = null;
+                    }
+
+                    final String childDirName = encodeDirName(child);
+                    if(targetChildren.remove(childDirName)) {
+                        diff(childReg, childAddress, childRes, new File(typeDir, childDirName), diffList, ignoreMissingChildRegistration);
+                    } else {
+                        diffRemoveResource(childReg, childAddress, childRes, diffList, ignoreMissingChildRegistration);
+                    }
+                }
+
+                if(!targetChildren.isEmpty()) {
+                    // add
+                    for(String childDirName : targetChildren) {
+                        final String child = decodeDirName(childDirName);
+                        final ModelNode childAddress = address.clone();
+                        childAddress.add(type, child);
+                        if(registration != null) {
+                            final ImmutableManagementResourceRegistration childReg = registration.getSubModel(
+                                    PathAddress.pathAddress(type, child));
+                            if(childReg == null) {
+                                if(ignoreMissingChildRegistration) {
+                                    diffAddResource(null, childAddress,
+                                            readResource(new File(typeDir, childDirName)), diffList);
+                                } else {
+                                    childRegistrationIsMissing(childAddress);
+                                }
+                            } else if(isPersistent(childReg)) {
+                                diffAddResource(childReg, childAddress,
+                                        readResource(new File(typeDir, childDirName)), diffList, ignoreMissingChildRegistration);
+                            }
+                        } else {
+                            diffAddResource(null, childAddress,
+                                    readResource(new File(typeDir, childDirName)), diffList);
+                        }
+                    }
+                }
+            } else {
+                // remove
+                for(Resource.ResourceEntry child : actual.getChildren(type)) {
+                    final ModelNode childAddress = address.clone();
+                    childAddress.add(type, child.getName());
+                    if(!isPersistent(child)) {
+                        //System.out.println("SKIPPING AS NOT PERSISTENT 2: " + childAddress);
+                        continue;
+                    }
+                    if(registration != null) {
+                        final ImmutableManagementResourceRegistration childReg = registration.getSubModel(
+                                PathAddress.pathAddress(type, child.getName()));
+                        if(childReg == null) {
+                            if(ignoreMissingChildRegistration) {
+                                diffRemoveResource(null, childAddress, child, diffList);
+                            } else {
+                                childRegistrationIsMissing(childAddress);
+                            }
+                        } else if(isPersistent(childReg)) {
+                            diffRemoveResource(childReg, childAddress, child, diffList, ignoreMissingChildRegistration);
+                        }
+                    } else {
+                        diffRemoveResource(null, childAddress, child, diffList);
+                    }
+                }
+            }
+        }
+
+        if(!targetTypes.isEmpty()) {
+            // add
+            for (String typeDirName : targetTypes) {
+                final String type = decodeDirName(typeDirName);
+                final File[] childDirs = new File(targetDir, typeDirName).listFiles(new FileFilter(){
+                    @Override
+                    public boolean accept(File pathname) {
+                        return pathname.isDirectory();
+                    }});
+                if(childDirs == null) {
+                    continue;
+                }
+                for(File childDir : childDirs) {
+                    final Resource child = readResource(childDir);
+                    final ModelNode childAddress = address.clone();
+                    final String childName = decodeDirName(childDir.getName());
+                    childAddress.add(type, childName);
+                    if(registration != null) {
+                        ImmutableManagementResourceRegistration childReg = registration.getSubModel(
+                                PathAddress.pathAddress(typeDirName, childName));
+                        if(childReg == null) {
+                            if(ignoreMissingChildRegistration) {
+                                diffAddResource(null, childAddress, child, diffList);
+                            } else {
+                                childRegistrationIsMissing(childAddress);
+                            }
+                        } else if(isPersistent(childReg)) {
+                            diffAddResource(childReg, childAddress, child, diffList, ignoreMissingChildRegistration);
+                        }
+                    } else {
+                        diffAddResource(null, childAddress, child, diffList);
+                    }
+                }
+            }
+        }
+        */
+    }
+
+    static List<File> listOrderedDirs(File targetDir) throws IOException {
+        final List<File> ordered;
+        final File orderFile = new File(targetDir, ORDER_FILE_NAME);
+        if(orderFile.exists()) {
+            final String[] nameArr = targetDir.list();
+            final Set<String> fileSet = nameArr == null ? Collections.<String>emptySet() : new HashSet<String>(Arrays.asList(nameArr));
+            ordered = new ArrayList<File>(fileSet.size());
+            BufferedReader reader = null;
+            try {
+                reader = new BufferedReader(new FileReader(orderFile));
+                String name = reader.readLine();
+                while(name != null) {
+                    name = name.trim();
+                    if(!name.isEmpty() && name.charAt(0) != '#') {
+                        final File childDir = new File(targetDir, name);
+                        if (!childDir.isDirectory()) {
+                            throw new IllegalStateException("'" + name + "' from " + ORDER_FILE_NAME + " is not a directory.");
+                        }
+                        if (fileSet.remove(name)) {
+                            ordered.add(childDir);
+                        } else {
+                            throw new IllegalStateException("Directory from " + ORDER_FILE_NAME + " does not exist "
+                                    + childDir.getAbsolutePath());
+                        }
+                    }
+                    name = reader.readLine();
+                }
+            } finally {
+                if(reader != null) {
+                    reader.close();
+                }
+            }
+            if(!fileSet.isEmpty()) {
+                for(String name : fileSet) {
+                    final File f = new File(targetDir, name);
+                    if(f.isDirectory()) {
+                        ordered.add(f);
+                    }
+                }
+            }
+        } else {
+            final File[] fileList = targetDir.listFiles(new FileFilter(){
+                @Override
+                public boolean accept(File pathname) {
+                    return pathname.isDirectory();
+                }});
+            ordered = fileList == null ? Collections.<File>emptyList() : Arrays.asList(fileList);
+        }
+        return ordered;
     }
 
     static boolean isPersistent(Resource resource, final ImmutableManagementResourceRegistration registration) {

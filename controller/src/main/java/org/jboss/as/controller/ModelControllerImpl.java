@@ -698,8 +698,8 @@ class ModelControllerImpl implements ModelController {
     }
 
     ConfigurationPersister.PersistenceResource writeModel(final ManagementModelImpl model, Set<PathAddress> affectedAddresses) throws ConfigurationPersistenceException {
-        return writeAsFSTree(model);
-//        return writeModelAsXML(model, affectedAddresses);
+//        return writeAsFSTree(model);
+        return writeModelAsXML(model, affectedAddresses);
     }
 
     ConfigurationPersister.PersistenceResource writeModelAsXML(final ManagementModelImpl model,
