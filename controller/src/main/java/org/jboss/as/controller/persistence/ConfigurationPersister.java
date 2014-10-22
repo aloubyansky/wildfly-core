@@ -27,6 +27,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
+import org.jboss.as.controller.ManagementModel;
 import org.jboss.as.controller.PathAddress;
 import org.jboss.dmr.ModelNode;
 
@@ -62,7 +63,8 @@ public interface ConfigurationPersister {
      *
      * @return callback to use to control whether the stored model should be flushed to persistent storage
      */
-    PersistenceResource store(ModelNode model, Set<PathAddress> affectedAddresses) throws ConfigurationPersistenceException;
+    //PersistenceResource store(ModelNode model, Set<PathAddress> affectedAddresses) throws ConfigurationPersistenceException;
+    PersistenceResource store(ManagementModel model, Set<PathAddress> affectedAddresses) throws ConfigurationPersistenceException;
 
     /**
      * Marshals the given configuration model to XML, writing to the given stream.
@@ -77,7 +79,7 @@ public interface ConfigurationPersister {
      * Load the configuration model, returning it as a list of updates to be
      * executed by the controller.
      */
-    List<ModelNode> load() throws ConfigurationPersistenceException;
+    List<ModelNode> load(ManagementModel mgmtModel) throws ConfigurationPersistenceException;
 
     /**
      * Called once the xml has been successfully parsed, translated into updates, executed in the target controller

@@ -388,13 +388,13 @@ public class InterfaceManagementUnitTestCase {
         }
 
         @Override
-        public PersistenceResource store(ModelNode model, Set<PathAddress> affectedAddresses)
+        public PersistenceResource store(ManagementModel model, Set<PathAddress> affectedAddresses)
                 throws ConfigurationPersistenceException {
-            return new StringPersistenceResource(model, this);
+            return new StringPersistenceResource(Resource.Tools.readModel(model.getRootResource()), this);
         }
 
         @Override
-        public List<ModelNode> load() throws ConfigurationPersistenceException {
+        public List<ModelNode> load(ManagementModel mgmtModel) throws ConfigurationPersistenceException {
             return bootOperations;
         }
 

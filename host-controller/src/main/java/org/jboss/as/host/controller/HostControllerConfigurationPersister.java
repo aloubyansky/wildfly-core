@@ -30,12 +30,17 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 
+import org.jboss.as.controller.ManagementModel;
 import org.jboss.as.controller.PathAddress;
+import org.jboss.as.controller.PathElement;
+import org.jboss.as.controller.capability.registry.RuntimeCapabilityRegistry;
 import org.jboss.as.controller.extension.ExtensionRegistry;
 import org.jboss.as.controller.persistence.ConfigurationFile;
 import org.jboss.as.controller.persistence.ConfigurationPersistenceException;
 import org.jboss.as.controller.persistence.ExtensibleConfigurationPersister;
 import org.jboss.as.controller.persistence.SubsystemMarshallingContext;
+import org.jboss.as.controller.registry.ManagementResourceRegistration;
+import org.jboss.as.controller.registry.Resource;
 import org.jboss.as.domain.controller.LocalHostControllerInfo;
 import org.jboss.as.host.controller.logging.HostControllerLogger;
 import org.jboss.dmr.ModelNode;
@@ -137,13 +142,30 @@ public class HostControllerConfigurationPersister implements ExtensibleConfigura
     }
 
     @Override
-    public PersistenceResource store(ModelNode model, Set<PathAddress> affectedAddresses) throws ConfigurationPersistenceException {
+    public PersistenceResource store(ManagementModel model, Set<PathAddress> affectedAddresses) throws ConfigurationPersistenceException {
         final PersistenceResource[] delegates = new PersistenceResource[2];
         for (PathAddress addr : affectedAddresses) {
             if (delegates[0] == null && addr.size() > 0 && HOST.equals(addr.getElement(0).getKey()) && addr.getElement(0).getValue().equals(hostControllerInfo.getLocalHostName())) {
-                ModelNode hostModel = new ModelNode();
-                hostModel.set(model.get(HOST, hostControllerInfo.getLocalHostName()));
-                delegates[0] = hostPersister.store(hostModel, affectedAddresses);
+                //ModelNode hostModel = new ModelNode();
+                //hostModel.set(model.get(HOST, hostControllerInfo.getLocalHostName()));
+                final Resource hostRes = model.getRootResource().getChild(PathElement.pathElement(HOST, hostControllerInfo.getLocalHostName()));
+                final ManagementResourceRegistration hostReg = model.getRootResourceRegistration().getSubModel(PathAddress.pathAddress(HOST, hostControllerInfo.getLocalHostName()));
+                delegates[0] = hostPersister.store(new ManagementModel(){
+
+                    @Override
+                    public ManagementResourceRegistration getRootResourceRegistration() {
+                        return hostReg;
+                    }
+
+                    @Override
+                    public Resource getRootResource() {
+                        return hostRes;
+                    }
+
+                    @Override
+                    public RuntimeCapabilityRegistry getCapabilityRegistry() {
+                        return null;
+                    }}, affectedAddresses);
             } else if (delegates[1] == null && (addr.size() == 0 || !HOST.equals(addr.getElement(0).getKey()))) {
                 delegates[1] = getDomainPersister().store(model, affectedAddresses);
             }
@@ -182,8 +204,8 @@ public class HostControllerConfigurationPersister implements ExtensibleConfigura
     }
 
     @Override
-    public List<ModelNode> load() throws ConfigurationPersistenceException {
-        return hostPersister.load();
+    public List<ModelNode> load(ManagementModel mgmtModel) throws ConfigurationPersistenceException {
+        return hostPersister.load(mgmtModel);
     }
 
     @Override

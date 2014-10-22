@@ -29,6 +29,7 @@ import java.util.concurrent.ExecutorService;
 
 import javax.xml.namespace.QName;
 
+import org.jboss.as.controller.ManagementModel;
 import org.jboss.as.controller.PathAddress;
 import org.jboss.as.controller.extension.ExtensionRegistry;
 import org.jboss.as.controller.parsing.Namespace;
@@ -129,7 +130,7 @@ public class ConfigurationPersisterFactory {
         }
 
         @Override
-        public List<ModelNode> load() throws ConfigurationPersistenceException {
+        public List<ModelNode> load(ManagementModel model) throws ConfigurationPersistenceException {
             // TODO throw an exception
             HostControllerLogger.ROOT_LOGGER.invalidRemoteBackupPersisterState();
             return Collections.emptyList();
@@ -148,7 +149,7 @@ public class ConfigurationPersisterFactory {
         }
 
         @Override
-        public PersistenceResource store(ModelNode model, Set<PathAddress> affectedAddresses) throws ConfigurationPersistenceException {
+        public PersistenceResource store(ManagementModel model, Set<PathAddress> affectedAddresses) throws ConfigurationPersistenceException {
             if(started) {
                 // TODO throw an exception
                 HostControllerLogger.ROOT_LOGGER.invalidRemoteBackupPersisterState();

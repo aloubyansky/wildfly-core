@@ -26,7 +26,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
+import org.jboss.as.controller.ManagementModel;
 import org.jboss.as.controller.PathAddress;
+import org.jboss.as.controller.registry.Resource;
 import org.jboss.dmr.ModelNode;
 
 /**
@@ -40,13 +42,13 @@ public abstract class TestConfigurationPersister extends AbstractConfigurationPe
     }
 
     @Override
-    public PersistenceResource store(ModelNode model, Set<PathAddress> affectedAddresses)
+    public PersistenceResource store(ManagementModel model, Set<PathAddress> affectedAddresses)
             throws ConfigurationPersistenceException {
-        return create(model);
+        return create(Resource.Tools.readModel(model.getRootResource()));
     }
 
     @Override
-    public List<ModelNode> load() throws ConfigurationPersistenceException {
+    public List<ModelNode> load(ManagementModel mgtmModel) throws ConfigurationPersistenceException {
         return Collections.emptyList();
     }
 

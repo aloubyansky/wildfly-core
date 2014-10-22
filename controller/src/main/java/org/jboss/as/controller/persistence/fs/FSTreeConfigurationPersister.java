@@ -25,22 +25,26 @@ package org.jboss.as.controller.persistence.fs;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.jboss.as.controller.ManagementModel;
 import org.jboss.as.controller.PathAddress;
 import org.jboss.as.controller.persistence.ConfigurationPersistenceException;
-import org.jboss.as.controller.persistence.ConfigurationPersister;
+import org.jboss.as.controller.persistence.ExtensibleConfigurationPersister;
+import org.jboss.as.controller.persistence.SubsystemMarshallingContext;
 import org.jboss.as.controller.registry.ManagementResourceRegistration;
 import org.jboss.as.controller.registry.Resource;
 import org.jboss.dmr.ModelNode;
+import org.jboss.staxmapper.XMLElementWriter;
 
 /**
  *
  * @author Alexey Loubyansky
  */
-public class FSTreeConfigurationPersister implements ConfigurationPersister {
+public class FSTreeConfigurationPersister implements ExtensibleConfigurationPersister { //ConfigurationPersister {
 
     private final File root;
     private final AtomicBoolean successfulBoot = new AtomicBoolean();
@@ -84,9 +88,9 @@ public class FSTreeConfigurationPersister implements ConfigurationPersister {
     }
 
     @Override
-    public PersistenceResource store(ModelNode model, Set<PathAddress> affectedAddresses)
+    public PersistenceResource store(ManagementModel model, Set<PathAddress> affectedAddresses)
             throws ConfigurationPersistenceException {
-        throw new UnsupportedOperationException();
+        return store(model.getRootResource(), model.getRootResourceRegistration());
     }
 
     @Override
@@ -95,56 +99,19 @@ public class FSTreeConfigurationPersister implements ConfigurationPersister {
     }
 
     @Override
-    public List<ModelNode> load() throws ConfigurationPersistenceException {
-/*
-        final List<ModelNode> extensions = new ArrayList<ModelNode>();
-        final List<ModelNode> fsBootOps = new ArrayList<ModelNode>();
+    public List<ModelNode> load(ManagementModel mgmtModel) throws ConfigurationPersistenceException {
 
-        boolean sawJSONFormatter = false;
-        ModelNode auditFileHandlerOp = null;
-        final ModelNode auditFileHandler = new ModelNode().setEmptyList();
-        auditFileHandler.add(ModelDescriptionConstants.CORE_SERVICE, ModelDescriptionConstants.MANAGEMENT);
-        auditFileHandler.add(ModelDescriptionConstants.ACCESS, ModelDescriptionConstants.AUDIT);
-        final ModelNode jsonFormatter = auditFileHandler.clone();
-        auditFileHandler.add(ModelDescriptionConstants.FILE_HANDLER, ModelDescriptionConstants.FILE);
-        jsonFormatter.add(ModelDescriptionConstants.JSON_FORMATTER, ModelDescriptionConstants.JSON_FORMATTER);
-
-        try {
-            for(ResourceDiff diff : FSPersistence.diff(controller.getManagementModel().getRootResourceRegistration(),
-                    new ModelNode().setEmptyList(), controller.getManagementModel().getRootResource(),
-                    new java.io.File("/home/avoka/git/fs-persistence"), true)) {
-                final List<Property> address = diff.getAddress().asPropertyList();
-                if(!address.isEmpty()) {
-                    if(address.get(0).getName().equals(ModelDescriptionConstants.EXTENSION)) {
-                        extensions.add(diff.toOperationRequest());
-                    } else {
-                        if(!sawJSONFormatter) {
-                            if (diff.getAddress().equals(auditFileHandler)) {
-                                auditFileHandlerOp = diff.toOperationRequest();
-                            } else {
-                                fsBootOps.add(diff.toOperationRequest());
-                                if (jsonFormatter.equals(diff.getAddress())) {
-                                    sawJSONFormatter = true;
-                                    if (auditFileHandlerOp != null) {
-                                        fsBootOps.add(auditFileHandlerOp);
-                                    }
-                                }
-                            }
-                        } else {
-                            fsBootOps.add(diff.toOperationRequest());
-                        }
-                    }
-                } else {
-                    fsBootOps.add(diff.toOperationRequest());
-                }
-            }
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-        fsBootOps.addAll(0, extensions);
-*/
-        return null;
+      final List<ModelNode> fsBootOps = new ArrayList<ModelNode>();
+      try {
+          for(ResourceDiff diff : FSPersistence.diff(mgmtModel.getRootResourceRegistration(),
+                  new ModelNode().setEmptyList(), mgmtModel.getRootResource(), root, true)) {
+              fsBootOps.add(diff.toOperationRequest());
+          }
+      } catch (IOException e) {
+          // TODO Auto-generated catch block
+          e.printStackTrace();
+      }
+      return fsBootOps;
     }
 
     @Override
@@ -164,5 +131,15 @@ public class FSTreeConfigurationPersister implements ConfigurationPersister {
 
     @Override
     public void deleteSnapshot(String name) {
+    }
+
+    @Override
+    public void registerSubsystemWriter(String name, XMLElementWriter<SubsystemMarshallingContext> writer) {
+        // TODO Auto-generated method stub
+    }
+
+    @Override
+    public void unregisterSubsystemWriter(String name) {
+        // TODO Auto-generated method stub
     }
 }

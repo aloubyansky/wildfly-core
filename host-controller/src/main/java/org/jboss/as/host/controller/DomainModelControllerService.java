@@ -34,7 +34,6 @@ import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.PRO
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.RESULT;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.RUNNING_SERVER;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.SUCCESS;
-import static org.jboss.as.domain.controller.HostConnectionInfo.Event;
 import static org.jboss.as.domain.controller.HostConnectionInfo.Events.create;
 import static org.jboss.as.host.controller.logging.HostControllerLogger.DOMAIN_LOGGER;
 import static org.jboss.as.host.controller.logging.HostControllerLogger.ROOT_LOGGER;
@@ -106,6 +105,7 @@ import org.jboss.as.controller.services.path.PathManagerService;
 import org.jboss.as.controller.transform.Transformers;
 import org.jboss.as.domain.controller.DomainController;
 import org.jboss.as.domain.controller.HostConnectionInfo;
+import org.jboss.as.domain.controller.HostConnectionInfo.Event;
 import org.jboss.as.domain.controller.HostRegistrations;
 import org.jboss.as.domain.controller.LocalHostControllerInfo;
 import org.jboss.as.domain.controller.SlaveRegistrationException;
@@ -537,7 +537,7 @@ public class DomainModelControllerService extends AbstractControllerService impl
 
             // Parse the host.xml and invoke all the ops. The ops should rollback on any Stage.RUNTIME failure
             // We run the first op ("add-host") separately to let it set up the host ManagementResourceRegistration
-            List<ModelNode> hostBootOps = hostControllerConfigurationPersister.load();
+            List<ModelNode> hostBootOps = hostControllerConfigurationPersister.load(context.getManagementModel());
             ModelNode addHostOp = hostBootOps.remove(0);
             ok = boot(Collections.singletonList(addHostOp), true);
             ok = ok && boot(hostBootOps, true);
@@ -621,7 +621,7 @@ public class DomainModelControllerService extends AbstractControllerService impl
                     // parse the domain.xml and load the steps
                     // TODO look at having LocalDomainControllerAdd do this, using Stage.IMMEDIATE for the steps
                     ConfigurationPersister domainPersister = hostControllerConfigurationPersister.getDomainPersister();
-                    ok = boot(domainPersister.load(), false);
+                    ok = boot(domainPersister.load(context.getManagementModel()), false);
 
                     if (!ok && runningModeControl.getRunningMode().equals(RunningMode.ADMIN_ONLY)) {
                         ROOT_LOGGER.reportAdminOnlyDomainXmlFailure();

@@ -263,7 +263,7 @@ public class ModelParserUtils {
             }
         }
         extensionRegistry.setWriterRegistry(persister);
-        final List<ModelNode> ops = persister.load();
+        final List<ModelNode> ops = persister.load(null);
 
         final ModelNode model = new ModelNode();
         final ModelController controller = createController(serviceContainer, ProcessType.STANDALONE_SERVER, model, new Setup() {
@@ -299,7 +299,7 @@ public class ModelParserUtils {
                 persister.registerAdditionalRootElement(new QName(namespace.getUriString(), "host"), parser);
             }
         }
-        final List<ModelNode> ops = persister.load();
+        final List<ModelNode> ops = persister.load(null);
 
         final ModelNode model = new ModelNode();
 
@@ -405,7 +405,7 @@ public class ModelParserUtils {
             }
         }
         extensionRegistry.setWriterRegistry(persister);
-        final List<ModelNode> ops = persister.load();
+        final List<ModelNode> ops = persister.load(null);
         final ModelNode model = new ModelNode();
         final ModelController controller = createController(serviceContainer, ProcessType.HOST_CONTROLLER, model, new Setup() {
             public void setup(ModelControllerService modelControllerService, Resource resource, ManagementResourceRegistration rootRegistration, DelegatingConfigurableAuthorizer authorizer) {

@@ -37,6 +37,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
+import org.jboss.as.controller.ManagementModel;
 import org.jboss.as.controller.ModelController;
 import org.jboss.as.controller.PathAddress;
 import org.jboss.as.controller.RunningMode;
@@ -172,12 +173,12 @@ public final class ServerStartTask implements ServerTask, Serializable, ObjectIn
                     };
 
                     @Override
-                    public PersistenceResource store(final ModelNode model, Set<PathAddress> affectedAddresses) throws ConfigurationPersistenceException {
+                    public PersistenceResource store(final ManagementModel model, Set<PathAddress> affectedAddresses) throws ConfigurationPersistenceException {
                         return pr;
                     }
 
                     @Override
-                    public List<ModelNode> load() throws ConfigurationPersistenceException {
+                    public List<ModelNode> load(ManagementModel mgmtModel) throws ConfigurationPersistenceException {
                         try {
                             final ModelNode operations = bootOperations.get();
                             return operations.asList();

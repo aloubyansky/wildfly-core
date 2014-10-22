@@ -28,7 +28,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.xml.namespace.QName;
 
+import org.jboss.as.controller.ManagementModel;
 import org.jboss.as.controller.PathAddress;
+import org.jboss.as.controller.registry.Resource;
 import org.jboss.dmr.ModelNode;
 import org.jboss.staxmapper.XMLElementReader;
 import org.jboss.staxmapper.XMLElementWriter;
@@ -67,7 +69,7 @@ public class BackupXmlConfigurationPersister extends XmlConfigurationPersister {
     }
 
     @Override
-    public PersistenceResource store(final ModelNode model, Set<PathAddress> affectedAddresses) throws ConfigurationPersistenceException {
+    public PersistenceResource store(final ManagementModel model, Set<PathAddress> affectedAddresses) throws ConfigurationPersistenceException {
         if(!successfulBoot.get()) {
             return new PersistenceResource() {
                 public void commit() {
@@ -77,7 +79,7 @@ public class BackupXmlConfigurationPersister extends XmlConfigurationPersister {
                 }
             };
         }
-        return new ConfigurationFilePersistenceResource(model, configurationFile, this);
+        return new ConfigurationFilePersistenceResource(Resource.Tools.readModel(model.getRootResource()), configurationFile, this);
     }
 
     @Override

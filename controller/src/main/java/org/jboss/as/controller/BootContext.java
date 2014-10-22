@@ -36,4 +36,6 @@ public interface BootContext {
      * @return the service target
      */
     ServiceTarget getServiceTarget();
+
+    ManagementModel getManagementModel();
 }

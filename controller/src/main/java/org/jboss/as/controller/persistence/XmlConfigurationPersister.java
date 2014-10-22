@@ -38,8 +38,10 @@ import javax.xml.namespace.QName;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamReader;
 
-import org.jboss.as.controller.logging.ControllerLogger;
+import org.jboss.as.controller.ManagementModel;
 import org.jboss.as.controller.PathAddress;
+import org.jboss.as.controller.logging.ControllerLogger;
+import org.jboss.as.controller.registry.Resource;
 import org.jboss.dmr.ModelNode;
 import org.jboss.staxmapper.XMLElementReader;
 import org.jboss.staxmapper.XMLElementWriter;
@@ -81,13 +83,13 @@ public class XmlConfigurationPersister extends AbstractConfigurationPersister {
 
     /** {@inheritDoc} */
     @Override
-    public PersistenceResource store(final ModelNode model, Set<PathAddress> affectedAddresses) throws ConfigurationPersistenceException {
-        return new FilePersistenceResource(model, fileName, this);
+    public PersistenceResource store(final ManagementModel model, Set<PathAddress> affectedAddresses) throws ConfigurationPersistenceException {
+        return new FilePersistenceResource(Resource.Tools.readModel(model.getRootResource()), fileName, this);
     }
 
     /** {@inheritDoc} */
     @Override
-    public List<ModelNode> load() throws ConfigurationPersistenceException {
+    public List<ModelNode> load(ManagementModel mgmtModel) throws ConfigurationPersistenceException {
         final XMLMapper mapper = XMLMapper.Factory.create();
         mapper.registerRootElement(rootElement, rootParser);
         synchronized (additionalParsers) {

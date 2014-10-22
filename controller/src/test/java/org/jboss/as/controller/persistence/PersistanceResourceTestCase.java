@@ -30,7 +30,13 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.Collections;
 
+import org.jboss.as.controller.ManagementModel;
 import org.jboss.as.controller.PathAddress;
+import org.jboss.as.controller.SimpleResourceDefinition;
+import org.jboss.as.controller.capability.registry.RuntimeCapabilityRegistry;
+import org.jboss.as.controller.descriptions.NonResolvingResourceDescriptionResolver;
+import org.jboss.as.controller.registry.ManagementResourceRegistration;
+import org.jboss.as.controller.registry.Resource;
 import org.jboss.dmr.ModelNode;
 import org.junit.After;
 import org.junit.Assert;
@@ -683,7 +689,26 @@ public class PersistanceResourceTestCase {
     }
 
     private void store(TestConfigurationPersister persister, String s) throws Exception {
-        persister.store(new ModelNode(s), Collections.<PathAddress>emptySet()).commit();
+        final Resource res = Resource.Factory.create();
+        res.getModel().set(s);
+        final ManagementResourceRegistration reg = ManagementResourceRegistration.Factory.create(
+                new SimpleResourceDefinition(PathAddress.EMPTY_ADDRESS.getLastElement(),
+                new NonResolvingResourceDescriptionResolver()));
+        persister.store(new ManagementModel(){
+            @Override
+            public ManagementResourceRegistration getRootResourceRegistration() {
+                return reg;
+            }
+
+            @Override
+            public Resource getRootResource() {
+                return res;
+            }
+
+            @Override
+            public RuntimeCapabilityRegistry getCapabilityRegistry() {
+                return null;
+            }}, Collections.<PathAddress>emptySet()).commit();
     }
 
     private File createDir(File dir, String name) {

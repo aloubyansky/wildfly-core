@@ -348,7 +348,7 @@ public final class ServerService extends AbstractControllerService {
                 // TODO replace system property used by tests with something properly configurable for general use
                 // TODO search for uses of "jboss.unsupported.fail-boot-on-runtime-failure" in tests before changing this!!
                 boolean failOnRuntime = Boolean.valueOf(WildFlySecurityManager.getPropertyPrivileged("jboss.unsupported.fail-boot-on-runtime-failure", "false"));
-                ok = boot(extensibleConfigurationPersister.load(), failOnRuntime);
+                ok = boot(extensibleConfigurationPersister.load(context.getManagementModel()), failOnRuntime);
                 if (ok) {
                     finishBoot();
                 }

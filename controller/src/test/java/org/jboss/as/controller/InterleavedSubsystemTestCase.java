@@ -204,13 +204,13 @@ public class InterleavedSubsystemTestCase {
 
         /** {@inheritDoc} */
         @Override
-        public PersistenceResource store(final ModelNode model, Set<PathAddress> affectedAddresses) {
+        public PersistenceResource store(final ManagementModel model, Set<PathAddress> affectedAddresses) {
             return NullPersistenceResource.INSTANCE;
         }
 
         /** {@inheritDoc} */
         @Override
-        public List<ModelNode> load() {
+        public List<ModelNode> load(ManagementModel mgtmModel) {
             final List<ModelNode> bootOps = new ArrayList<ModelNode>();
             final ModelNode addrAE = new ModelNode().setEmptyList().add(EXTENSION, "a");
             final ModelNode addrAS = new ModelNode().setEmptyList().add(SUBSYSTEM, "a");
