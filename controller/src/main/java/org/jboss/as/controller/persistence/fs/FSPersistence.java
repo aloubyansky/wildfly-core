@@ -82,12 +82,33 @@ public class FSPersistence {
 
     public static void persist(ImmutableManagementResourceRegistration registration,
             Resource res, File dir, boolean removeNotOverriden) throws IOException {
+        persist(registration, res, dir, removeNotOverriden, Collections.<String>emptySet());
+    }
+
+    public static void persist(ImmutableManagementResourceRegistration registration,
+            Resource res, File dir, boolean removeNotOverriden, Set<String> ignoreTypes) throws IOException {
+
+        if(/*dir.getName().equals("module-loading") ||*/
+                dir.getName().equals("ignored-resources") ||
+                dir.getName().equals("host-environment") ||
+                dir.getName().equals("discovery-options")) {
+            System.out.println("PERSIST: " + dir.getAbsolutePath() + " " +
+                registration.isAlias() + " " +
+                registration.isRemote() + " " +
+                registration.isRuntimeOnly() + " " +
+                res.isProxy() + " " +
+                res.isRuntime());
+            return;
+        }
 
         if(!isPersistent(res, registration)) {
             return;
         }
 
         final Set<String> resourceTypes = res.getChildTypes();
+        if(!ignoreTypes.isEmpty()) {
+            resourceTypes.removeAll(ignoreTypes);
+        }
         if(resourceTypes.isEmpty()) {
             if(dir.exists()) {
                 if (removeNotOverriden) {
@@ -174,7 +195,7 @@ public class FSPersistence {
                         final File childDir = new File(fsType, childDirName);
                         if(childDir.getName().trim().isEmpty()) {
                             throw new IllegalStateException("Empty dir name: '" + childDir.getAbsolutePath() + "', '"
-                        + fsType.getAbsolutePath() + "', '" + childName + "'");
+                                + fsType.getAbsolutePath() + "', '" + childName + "'");
                         }
                         persist(childReg, child, childDir, removeNotOverriden);
                     }
@@ -353,11 +374,11 @@ public class FSPersistence {
         return diff;
     }
 
-    public static List<ResourceDiff> diff(ModelNode address, Resource actual, File dir)
+/*    private static List<ResourceDiff> diff(ModelNode address, Resource actual, File dir)
             throws IOException {
         return diff(null, address, actual, dir);
     }
-
+*/
     public static List<ResourceDiff> diff(ImmutableManagementResourceRegistration registration,
             ModelNode address, Resource actual, File dir) throws IOException {
         return diff(registration, address, actual, dir, false);
@@ -371,30 +392,14 @@ public class FSPersistence {
         return diff;
     }
 
-    /*
-    public static List<ResourceDiff> describe(ImmutableManagementResourceRegistration registration,
-            ModelNode address, String type, File dir) throws IOException {
-        final ArrayList<ResourceDiff> diffList = new ArrayList<ResourceDiff>();
-        final Resource resource = readResource(dir);
-        for (Resource.ResourceEntry child : resource.getChildren(type)) {
-            final ModelNode childAddress = address.clone();
-            childAddress.add(type, child.getName());
-            if (registration != null) {
-                final ImmutableManagementResourceRegistration childReg = registration.getSubModel(
-                        PathAddress.pathAddress(type, child.getName()));
-                if (childReg == null) {
-                    childRegistrationIsMissing(childAddress);
-                }
-                if (isPersistent(childReg)) {
-                    diffAddResource(childReg, childAddress, child, diffList);
-                }
-            } else {
-                diffAddResource(null, childAddress, child, diffList);
-            }
-        }
-        return diffList;
+    public static List<ResourceDiff> diff(ImmutableManagementResourceRegistration registration,
+            ModelNode address, Resource actual, File dir, boolean ignoreMissingChildRegistration,
+            Set<String> skipTypes) throws IOException {
+        final ArrayList<ResourceDiff> diff = new ArrayList<ResourceDiff>();
+        diff(registration, address, actual, dir, diff, ignoreMissingChildRegistration, skipTypes);
+        return diff;
     }
-*/
+
     private static void diff(ModelNode address, Resource actual, Resource target, List<ResourceDiff> diffList) {
         diff(null, address, actual, target, diffList);
     }
@@ -711,12 +716,24 @@ public class FSPersistence {
     // TODO
     private static void diff(ImmutableManagementResourceRegistration registration, ModelNode address,
             Resource actual, File targetDir, List<ResourceDiff> diffList, boolean ignoreMissingChildRegistration) throws IOException {
+        diff(registration, address, actual, targetDir, diffList, ignoreMissingChildRegistration, Collections.<String>emptySet());
+    }
+
+    private static void diff(ImmutableManagementResourceRegistration registration, ModelNode address,
+                Resource actual, File targetDir, List<ResourceDiff> diffList,
+                boolean ignoreMissingChildRegistration, Set<String> skipTypes) throws IOException {
 
         diffAttributes(registration, address, actual.getModel(), readResourceFile(targetDir), diffList);
 
         final Set<String> actualTypes = new HashSet<String>(actual.getChildTypes());
+        if(!skipTypes.isEmpty()) {
+            actualTypes.removeAll(skipTypes);
+        }
         for(File typeDir : listOrderedDirs(targetDir)) {
             final String targetType = decodeDirName(typeDir.getName());
+            if(skipTypes.contains(targetType)) {
+                continue;
+            }
             if(actualTypes.remove(targetType)) {
                 final Set<String> actualChildren = new HashSet<String>(actual.getChildrenNames(targetType));
                 for(File childDir : listOrderedDirs(typeDir)) {
@@ -776,7 +793,10 @@ public class FSPersistence {
                                 diffRemoveResource(childReg, childAddress, child, diffList, ignoreMissingChildRegistration);
                             }
                         } else {
-                            diffRemoveResource(null, childAddress, child, diffList);
+                            // TODO SKIPPING access authorization
+                            if(!(targetType.equals("access") && childName.equals("authorization"))) {
+                                diffRemoveResource(null, childAddress, child, diffList);
+                            }
                         }
                     }
                 }
@@ -833,139 +853,6 @@ public class FSPersistence {
                 }
             }
         }
-
-        /*
-        final Set<String> targetTypes = new HashSet<String>(Arrays.asList(targetDir.list()));
-        for(String type : actual.getChildTypes()) {
-            final String typeDirName = encodeDirName(type);
-            if(targetTypes.remove(typeDirName)) {
-                final File typeDir = new File(targetDir, typeDirName);
-                final Set<String> targetChildren = new HashSet<String>(Arrays.asList(typeDir.list(new FilenameFilter(){
-                    @Override
-                    public boolean accept(File dir, String name) {
-                        return new File(dir, name).isDirectory();
-                    }})));
-                for(String child : actual.getChildrenNames(type)) {
-                    final ModelNode childAddress = address.clone();
-                    childAddress.add(type, child);
-                    final PathElement pe = PathElement.pathElement(type, child);
-                    final Resource childRes = actual.getChild(pe);
-                    if(!isPersistent(childRes)) {
-                        //System.out.println("SKIPPING AS NOT PERSISTENT 1: " + childAddress);
-                        continue;
-                    }
-                    final ImmutableManagementResourceRegistration childReg;
-                    if(registration != null) {
-                        childReg = registration.getSubModel(PathAddress.pathAddress(type, child));
-                        if(childReg == null) {
-                            if(!ignoreMissingChildRegistration) {
-                                childRegistrationIsMissing(childAddress);
-                            }
-                        } else if(!isPersistent(childReg)) {
-                            continue;
-                        }
-                    } else {
-                        childReg = null;
-                    }
-
-                    final String childDirName = encodeDirName(child);
-                    if(targetChildren.remove(childDirName)) {
-                        diff(childReg, childAddress, childRes, new File(typeDir, childDirName), diffList, ignoreMissingChildRegistration);
-                    } else {
-                        diffRemoveResource(childReg, childAddress, childRes, diffList, ignoreMissingChildRegistration);
-                    }
-                }
-
-                if(!targetChildren.isEmpty()) {
-                    // add
-                    for(String childDirName : targetChildren) {
-                        final String child = decodeDirName(childDirName);
-                        final ModelNode childAddress = address.clone();
-                        childAddress.add(type, child);
-                        if(registration != null) {
-                            final ImmutableManagementResourceRegistration childReg = registration.getSubModel(
-                                    PathAddress.pathAddress(type, child));
-                            if(childReg == null) {
-                                if(ignoreMissingChildRegistration) {
-                                    diffAddResource(null, childAddress,
-                                            readResource(new File(typeDir, childDirName)), diffList);
-                                } else {
-                                    childRegistrationIsMissing(childAddress);
-                                }
-                            } else if(isPersistent(childReg)) {
-                                diffAddResource(childReg, childAddress,
-                                        readResource(new File(typeDir, childDirName)), diffList, ignoreMissingChildRegistration);
-                            }
-                        } else {
-                            diffAddResource(null, childAddress,
-                                    readResource(new File(typeDir, childDirName)), diffList);
-                        }
-                    }
-                }
-            } else {
-                // remove
-                for(Resource.ResourceEntry child : actual.getChildren(type)) {
-                    final ModelNode childAddress = address.clone();
-                    childAddress.add(type, child.getName());
-                    if(!isPersistent(child)) {
-                        //System.out.println("SKIPPING AS NOT PERSISTENT 2: " + childAddress);
-                        continue;
-                    }
-                    if(registration != null) {
-                        final ImmutableManagementResourceRegistration childReg = registration.getSubModel(
-                                PathAddress.pathAddress(type, child.getName()));
-                        if(childReg == null) {
-                            if(ignoreMissingChildRegistration) {
-                                diffRemoveResource(null, childAddress, child, diffList);
-                            } else {
-                                childRegistrationIsMissing(childAddress);
-                            }
-                        } else if(isPersistent(childReg)) {
-                            diffRemoveResource(childReg, childAddress, child, diffList, ignoreMissingChildRegistration);
-                        }
-                    } else {
-                        diffRemoveResource(null, childAddress, child, diffList);
-                    }
-                }
-            }
-        }
-
-        if(!targetTypes.isEmpty()) {
-            // add
-            for (String typeDirName : targetTypes) {
-                final String type = decodeDirName(typeDirName);
-                final File[] childDirs = new File(targetDir, typeDirName).listFiles(new FileFilter(){
-                    @Override
-                    public boolean accept(File pathname) {
-                        return pathname.isDirectory();
-                    }});
-                if(childDirs == null) {
-                    continue;
-                }
-                for(File childDir : childDirs) {
-                    final Resource child = readResource(childDir);
-                    final ModelNode childAddress = address.clone();
-                    final String childName = decodeDirName(childDir.getName());
-                    childAddress.add(type, childName);
-                    if(registration != null) {
-                        ImmutableManagementResourceRegistration childReg = registration.getSubModel(
-                                PathAddress.pathAddress(typeDirName, childName));
-                        if(childReg == null) {
-                            if(ignoreMissingChildRegistration) {
-                                diffAddResource(null, childAddress, child, diffList);
-                            } else {
-                                childRegistrationIsMissing(childAddress);
-                            }
-                        } else if(isPersistent(childReg)) {
-                            diffAddResource(childReg, childAddress, child, diffList, ignoreMissingChildRegistration);
-                        }
-                    } else {
-                        diffAddResource(null, childAddress, child, diffList);
-                    }
-                }
-            }
-        }
-        */
     }
 
     static List<File> listOrderedDirs(File targetDir) throws IOException {
@@ -1041,7 +928,7 @@ public class FSPersistence {
             //throw new IllegalStateException("Attribute access is not specified for " + name + " at " + location);
             return false;
         }
-        return access.getStorageType() == AttributeAccess.Storage.CONFIGURATION;
+        return /*access.getAccessType().isWritable() &&*/ access.getStorageType() == AttributeAccess.Storage.CONFIGURATION;
     }
 
     static void childRegistrationIsMissing(final ModelNode childAddress) {

@@ -23,6 +23,7 @@ package org.jboss.as.controller.persistence.fs;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collections;
 
 import org.jboss.as.controller.OperationContext;
 import org.jboss.as.controller.OperationDefinition;
@@ -30,6 +31,7 @@ import org.jboss.as.controller.OperationFailedException;
 import org.jboss.as.controller.OperationStepHandler;
 import org.jboss.as.controller.PathAddress;
 import org.jboss.as.controller.SimpleOperationDefinitionBuilder;
+import org.jboss.as.controller.descriptions.ModelDescriptionConstants;
 import org.jboss.as.controller.descriptions.common.ControllerResolver;
 import org.jboss.as.controller.registry.ImmutableManagementResourceRegistration;
 import org.jboss.as.controller.registry.Resource;
@@ -62,7 +64,7 @@ public class PersistToFSStepHandler implements OperationStepHandler {
         final Resource resource = context.readResource(PathAddress.EMPTY_ADDRESS, true);
         if(FSPersistence.isPersistent(resource, registration)) {
             try {
-                FSPersistence.persist(registration, resource, dir);
+                FSPersistence.persist(registration, resource, dir, true, Collections.singleton(ModelDescriptionConstants.HOST));
             } catch (IOException e) {
                 throw new OperationFailedException("Failed to persist resource", e);
             }

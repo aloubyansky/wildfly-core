@@ -175,7 +175,7 @@ public interface Bootstrap {
                         QName rootElement = new QName(Namespace.CURRENT.getUriString(), "server");
                         StandaloneXml parser = new StandaloneXml(Module.getBootModuleLoader(), executorService, extensionRegistry);
                         BackupXmlConfigurationPersister persister = new BackupXmlConfigurationPersister(configurationFile, rootElement, parser, parser);
-                        //FSTreeConfigurationPersister persister = new FSTreeConfigurationPersister(new java.io.File("/home/avoka/git/fs-persistence"));
+                        //FSTreeConfigurationPersister persister = new FSTreeConfigurationPersister(FSTreeConfigurationPersister.STANDALONE_ROOT);
                         for (Namespace namespace : Namespace.domainValues()) {
                             if (!namespace.equals(Namespace.CURRENT)) {
                                 persister.registerAdditionalRootElement(new QName(namespace.getUriString(), "server"), parser);

@@ -25,11 +25,14 @@ import java.io.ByteArrayOutputStream;
 import java.util.List;
 import java.util.Set;
 
+import org.jboss.as.controller.ManagementModel;
 import org.jboss.as.controller.PathAddress;
 import org.jboss.as.controller.persistence.AbstractConfigurationPersister;
 import org.jboss.as.controller.persistence.ConfigurationPersistenceException;
+import org.jboss.as.controller.persistence.ConfigurationPersister;
 import org.jboss.as.controller.persistence.ModelMarshallingContext;
 import org.jboss.as.controller.persistence.NullConfigurationPersister;
+import org.jboss.as.controller.registry.Resource;
 import org.jboss.dmr.ModelNode;
 import org.jboss.staxmapper.XMLElementWriter;
 
@@ -51,16 +54,32 @@ public class StringConfigurationPersister extends AbstractConfigurationPersister
     }
 
     @Override
-    public PersistenceResource store(ModelNode model, Set<PathAddress> affectedAddresses)
+    public PersistenceResource store(ManagementModel model, Set<PathAddress> affectedAddresses)
             throws ConfigurationPersistenceException {
         if (!persistXml) {
             return new NullConfigurationPersister().store(model, affectedAddresses);
+        }
+        return new StringPersistenceResource(Resource.Tools.readModel(model.getRootResource()), this);
+    }
+
+    public PersistenceResource store(ModelNode model, Set<PathAddress> affectedAddresses)
+            throws ConfigurationPersistenceException {
+        if (!persistXml) {
+            return new ConfigurationPersister.PersistenceResource() {
+                @Override
+                public void commit() {
+                }
+
+                @Override
+                public void rollback() {
+                }
+            };
         }
         return new StringPersistenceResource(model, this);
     }
 
     @Override
-    public List<ModelNode> load() throws ConfigurationPersistenceException {
+    public List<ModelNode> load(ManagementModel model) throws ConfigurationPersistenceException {
         return bootOperations;
     }
 

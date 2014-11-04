@@ -70,6 +70,9 @@ import org.jboss.as.controller.operations.validation.IntRangeValidator;
 import org.jboss.as.controller.operations.validation.ParameterValidator;
 import org.jboss.as.controller.operations.validation.StringLengthValidator;
 import org.jboss.as.controller.persistence.ExtensibleConfigurationPersister;
+import org.jboss.as.controller.persistence.fs.FSTreeConfigurationPersister;
+import org.jboss.as.controller.persistence.fs.PersistToFSStepHandler;
+import org.jboss.as.controller.persistence.fs.SyncWithFSStepHandler;
 import org.jboss.as.controller.registry.ManagementResourceRegistration;
 import org.jboss.as.controller.resource.InterfaceDefinition;
 import org.jboss.as.controller.resource.SocketBindingGroupResourceDefinition;
@@ -78,8 +81,8 @@ import org.jboss.as.controller.services.path.PathResourceDefinition;
 import org.jboss.as.controller.transform.SubsystemDescriptionDump;
 import org.jboss.as.domain.controller.DomainController;
 import org.jboss.as.domain.controller.HostRegistrations;
-import org.jboss.as.domain.controller.logging.DomainControllerLogger;
 import org.jboss.as.domain.controller.LocalHostControllerInfo;
+import org.jboss.as.domain.controller.logging.DomainControllerLogger;
 import org.jboss.as.domain.controller.operations.ApplyExtensionsHandler;
 import org.jboss.as.domain.controller.operations.ApplyMissingDomainModelResourcesHandler;
 import org.jboss.as.domain.controller.operations.ApplyRemoteMasterDomainModelHandler;
@@ -270,6 +273,12 @@ public class DomainRootDefinition extends SimpleResourceDefinition {
 
             final SubsystemDescriptionDump dumper = new SubsystemDescriptionDump(extensionRegistry);
             resourceRegistration.registerOperationHandler(SubsystemDescriptionDump.DEFINITION, dumper);
+
+            resourceRegistration.registerOperationHandler(PersistToFSStepHandler.DEFINITION,
+                    new PersistToFSStepHandler(FSTreeConfigurationPersister.DOMAIN_ROOT));
+            resourceRegistration.registerOperationHandler(SyncWithFSStepHandler.DEFINITION,
+                    new SyncWithFSStepHandler(FSTreeConfigurationPersister.DOMAIN_ROOT));
+    System.out.println("DomainRootDefinition.registerOperations XXXXXXXXX");
 
         } else {
             DeploymentUploadURLHandler.registerSlave(resourceRegistration);

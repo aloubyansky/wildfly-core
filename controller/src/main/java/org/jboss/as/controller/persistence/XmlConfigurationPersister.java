@@ -40,9 +40,11 @@ import javax.xml.stream.XMLStreamReader;
 
 import org.jboss.as.controller.ManagementModel;
 import org.jboss.as.controller.PathAddress;
+import org.jboss.as.controller.descriptions.ModelDescriptionConstants;
 import org.jboss.as.controller.logging.ControllerLogger;
 import org.jboss.as.controller.registry.Resource;
 import org.jboss.dmr.ModelNode;
+import org.jboss.dmr.Property;
 import org.jboss.staxmapper.XMLElementReader;
 import org.jboss.staxmapper.XMLElementWriter;
 import org.jboss.staxmapper.XMLMapper;
@@ -87,6 +89,10 @@ public class XmlConfigurationPersister extends AbstractConfigurationPersister {
         return new FilePersistenceResource(Resource.Tools.readModel(model.getRootResource()), fileName, this);
     }
 
+    public PersistenceResource store(final ModelNode model, Set<PathAddress> affectedAddresses) throws ConfigurationPersistenceException {
+        return new FilePersistenceResource(model, fileName, this);
+    }
+
     /** {@inheritDoc} */
     @Override
     public List<ModelNode> load(ManagementModel mgmtModel) throws ConfigurationPersistenceException {
@@ -112,6 +118,22 @@ public class XmlConfigurationPersister extends AbstractConfigurationPersister {
             }
         } catch (Exception e) {
             throw ControllerLogger.ROOT_LOGGER.failedToParseConfiguration(e);
+        }
+
+        if(rootElement.getLocalPart().equals("domain")) {
+            for(ModelNode op : updates) {
+                final List<ModelNode> propList = op.get(ModelDescriptionConstants.ADDRESS).asList();
+                if(propList.isEmpty()) {
+                    System.out.println(op.get(ModelDescriptionConstants.OP).asString());
+                } else {
+                    final StringBuilder buf = new StringBuilder();
+                    for(Property prop : op.get(ModelDescriptionConstants.ADDRESS).asPropertyList()) {
+                        buf.append('/').append(prop.getName()).append("=").append(prop.getValue().asString());
+                    }
+                    buf.append(":").append(op.get(ModelDescriptionConstants.OP).asString());
+                    System.out.println(buf.toString());
+                }
+            }
         }
         return updates;
     }

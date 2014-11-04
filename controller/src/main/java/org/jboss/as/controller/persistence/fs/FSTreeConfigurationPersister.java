@@ -26,18 +26,21 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.jboss.as.controller.ManagementModel;
 import org.jboss.as.controller.PathAddress;
+import org.jboss.as.controller.descriptions.ModelDescriptionConstants;
 import org.jboss.as.controller.persistence.ConfigurationPersistenceException;
 import org.jboss.as.controller.persistence.ExtensibleConfigurationPersister;
 import org.jboss.as.controller.persistence.SubsystemMarshallingContext;
 import org.jboss.as.controller.registry.ManagementResourceRegistration;
 import org.jboss.as.controller.registry.Resource;
 import org.jboss.dmr.ModelNode;
+import org.jboss.dmr.Property;
 import org.jboss.staxmapper.XMLElementWriter;
 
 /**
@@ -46,14 +49,41 @@ import org.jboss.staxmapper.XMLElementWriter;
  */
 public class FSTreeConfigurationPersister implements ExtensibleConfigurationPersister { //ConfigurationPersister {
 
+    public static final File STANDALONE_ROOT = new java.io.File("/home/avoka/git/fs-persistence/standalone");
+    public static final File DOMAIN_ROOT = new java.io.File("/home/avoka/git/fs-persistence/domain");
+    public static final File HOST_ROOT = new java.io.File("/home/avoka/git/fs-persistence/host");
+
     private final File root;
     private final AtomicBoolean successfulBoot = new AtomicBoolean();
 
+    private final String[] prefix;
+    private final ModelNode[] firstOps;
+
+    public static String getHostName() throws ConfigurationPersistenceException {
+        try {
+            final ModelNode attrs = FSPersistence.readResourceFile(HOST_ROOT);
+            if(!attrs.has(ModelDescriptionConstants.NAME)) {
+                throw new ConfigurationPersistenceException(ModelDescriptionConstants.NAME +
+                        " is missing among the host attributes: " + attrs);
+            }
+            return attrs.get(ModelDescriptionConstants.NAME).asString();
+        } catch (IOException e) {
+            throw new ConfigurationPersistenceException("Failed to read host attributes from " +
+                new File(HOST_ROOT, FSPersistence.RESOURCE_FILE_NAME), e);
+        }
+    }
+
     public FSTreeConfigurationPersister(File root) {
+        this(root, null, null);
+    }
+
+    public FSTreeConfigurationPersister(File root, String[] prefix, ModelNode[] firstOperations) {
         if(root == null) {
             throw new IllegalArgumentException("The root directory is null");
         }
         this.root = root;
+        this.prefix = prefix;
+        this.firstOps = firstOperations;
     }
 
     public PersistenceResource store(final Resource res, final ManagementResourceRegistration registration)
@@ -74,7 +104,7 @@ public class FSTreeConfigurationPersister implements ExtensibleConfigurationPers
             @Override
             public void commit() {
                 try {
-                    FSPersistence.persist(registration, res, root);
+                    FSPersistence.persist(registration, res, root, true, Collections.singleton(ModelDescriptionConstants.HOST));
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -103,14 +133,60 @@ public class FSTreeConfigurationPersister implements ExtensibleConfigurationPers
 
       final List<ModelNode> fsBootOps = new ArrayList<ModelNode>();
       try {
+          ModelNode address = new ModelNode().setEmptyList();
+          if(prefix != null) {
+              address.add(prefix[0], prefix[1]);
+          }
+          if(firstOps != null) {
+              for(ModelNode op : firstOps) {
+                  fsBootOps.add(op);
+              }
+          }
           for(ResourceDiff diff : FSPersistence.diff(mgmtModel.getRootResourceRegistration(),
-                  new ModelNode().setEmptyList(), mgmtModel.getRootResource(), root, true)) {
+                  address, mgmtModel.getRootResource(), root, true,
+                  Collections.singleton(ModelDescriptionConstants.HOST))) {
               fsBootOps.add(diff.toOperationRequest());
           }
       } catch (IOException e) {
           // TODO Auto-generated catch block
           e.printStackTrace();
       }
+
+      if(root.getName().equals("domain")) {
+          for(ModelNode op : fsBootOps) {
+              final List<ModelNode> propList = op.get(ModelDescriptionConstants.ADDRESS).asList();
+              if(propList.isEmpty()) {
+                  final StringBuilder buf = new StringBuilder();
+                  buf.append(op.get(ModelDescriptionConstants.OP).asString());
+                  boolean params = false;
+                  for(String key : op.keys()) {
+                      if(key.equals(ModelDescriptionConstants.OP) ||
+                              key.equals(ModelDescriptionConstants.ADDRESS)) {
+                          continue;
+                      }
+                      if(!params) {
+                          buf.append('(');
+                          params = true;
+                      } else {
+                          buf.append(',');
+                      }
+                      buf.append(key).append('=').append(op.get(key).asString());
+                  }
+                  if(params) {
+                      buf.append(')');
+                  }
+                  System.out.println(buf.toString());
+              } else {
+                  final StringBuilder buf = new StringBuilder();
+                  for(Property prop : op.get(ModelDescriptionConstants.ADDRESS).asPropertyList()) {
+                      buf.append('/').append(prop.getName()).append("=").append(prop.getValue().asString());
+                  }
+                  buf.append(":").append(op.get(ModelDescriptionConstants.OP).asString());
+                  System.out.println(buf.toString());
+              }
+          }
+      }
+
       return fsBootOps;
     }
 

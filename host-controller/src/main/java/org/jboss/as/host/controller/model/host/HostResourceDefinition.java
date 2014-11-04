@@ -53,6 +53,9 @@ import org.jboss.as.controller.operations.common.ValidateAddressOperationHandler
 import org.jboss.as.controller.operations.common.ValidateOperationHandler;
 import org.jboss.as.controller.operations.common.XmlMarshallingHandler;
 import org.jboss.as.controller.operations.validation.EnumValidator;
+import org.jboss.as.controller.persistence.fs.FSTreeConfigurationPersister;
+import org.jboss.as.controller.persistence.fs.PersistToFSStepHandler;
+import org.jboss.as.controller.persistence.fs.SyncWithFSStepHandler;
 import org.jboss.as.controller.registry.AttributeAccess;
 import org.jboss.as.controller.registry.ManagementResourceRegistration;
 import org.jboss.as.controller.resource.InterfaceDefinition;
@@ -292,6 +295,11 @@ public class HostResourceDefinition extends SimpleResourceDefinition {
         XmlMarshallingHandler xmh = new HostXmlMarshallingHandler(configurationPersister.getHostPersister(), hostControllerInfo);
         hostRegistration.registerOperationHandler(XmlMarshallingHandler.DEFINITION, xmh);
 
+        hostRegistration.registerOperationHandler(PersistToFSStepHandler.DEFINITION, new PersistToFSStepHandler(
+                FSTreeConfigurationPersister.HOST_ROOT));
+        hostRegistration.registerOperationHandler(SyncWithFSStepHandler.DEFINITION, new SyncWithFSStepHandler(
+                FSTreeConfigurationPersister.HOST_ROOT));
+        System.err.println("HostResourceDefinition.registerOperations FS tree persistence ops");
 
         StartServersHandler ssh = new StartServersHandler(environment, serverInventory, runningModeControl);
         hostRegistration.registerOperationHandler(StartServersHandler.DEFINITION, ssh);

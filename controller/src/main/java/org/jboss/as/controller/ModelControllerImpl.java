@@ -513,6 +513,7 @@ class ModelControllerImpl implements ModelController {
                 if (!sawExtensionAdd && stepHandler == null) {
                     // Odd case. An op prior to the first extension add where there is no handler. This would really
                     // only happen during AS development
+                    new Exception("THE ODD CASE").printStackTrace();
                     logNoHandler(parsedOp);
                     invalid = true;
                     // stop

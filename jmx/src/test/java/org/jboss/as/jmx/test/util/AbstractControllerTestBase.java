@@ -197,7 +197,7 @@ public abstract class AbstractControllerTestBase {
         }
 
         @Override
-        public PersistenceResource store(final ModelNode model, Set<PathAddress> affectedAddresses) {
+        public PersistenceResource store(final ManagementModel model, Set<PathAddress> affectedAddresses) {
             return NullPersistenceResource.INSTANCE;
         }
 
@@ -205,7 +205,7 @@ public abstract class AbstractControllerTestBase {
          * {@inheritDoc}
          */
         @Override
-        public List<ModelNode> load() {
+        public List<ModelNode> load(ManagementModel model) {
             return new ArrayList<ModelNode>();
         }
 

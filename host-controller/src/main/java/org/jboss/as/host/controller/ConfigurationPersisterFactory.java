@@ -31,7 +31,9 @@ import javax.xml.namespace.QName;
 
 import org.jboss.as.controller.ManagementModel;
 import org.jboss.as.controller.PathAddress;
+import org.jboss.as.controller.descriptions.ModelDescriptionConstants;
 import org.jboss.as.controller.extension.ExtensionRegistry;
+import org.jboss.as.controller.operations.common.Util;
 import org.jboss.as.controller.parsing.Namespace;
 import org.jboss.as.controller.persistence.BackupXmlConfigurationPersister;
 import org.jboss.as.controller.persistence.ConfigurationFile;
@@ -41,7 +43,10 @@ import org.jboss.as.controller.persistence.ExtensibleConfigurationPersister;
 import org.jboss.as.controller.persistence.ModelMarshallingContext;
 import org.jboss.as.controller.persistence.NullConfigurationPersister;
 import org.jboss.as.controller.persistence.XmlConfigurationPersister;
+import org.jboss.as.controller.persistence.fs.FSTreeConfigurationPersister;
 import org.jboss.as.host.controller.logging.HostControllerLogger;
+import org.jboss.as.host.controller.operations.HostModelRegistrationHandler;
+import org.jboss.as.host.controller.operations.LocalDomainControllerAddHandler;
 import org.jboss.as.host.controller.parsing.DomainXml;
 import org.jboss.as.host.controller.parsing.HostXml;
 import org.jboss.dmr.ModelNode;
@@ -58,11 +63,47 @@ public class ConfigurationPersisterFactory {
 
     static final String CACHED_DOMAIN_XML = "domain.cached-remote.xml";
 
+    private static final boolean fsTree = true;
+    private static final boolean hostFSTree = fsTree;
+    private static final boolean domainFSTree = fsTree;
+
     // host.xml
     public static ExtensibleConfigurationPersister createHostXmlConfigurationPersister(final ConfigurationFile file, final HostControllerEnvironment environment) {
+
+        if(hostFSTree) {
+        final String hostName;
+        try {
+            // too soon to use environment.getHostName()
+            hostName = FSTreeConfigurationPersister.getHostName();
+        } catch (ConfigurationPersistenceException e) {
+            throw new IllegalStateException("Failed to read host name", e);
+        }
+
+        final ModelNode registerHostModel = new ModelNode();
+        registerHostModel.get(ModelDescriptionConstants.ADDRESS).setEmptyList();
+        registerHostModel.get(ModelDescriptionConstants.OP).set(HostModelRegistrationHandler.OPERATION_NAME);
+        registerHostModel.get(ModelDescriptionConstants.NAME).set(hostName);
+
+        final ModelNode writeLocalDC = new ModelNode();
+        final ModelNode addr = new ModelNode();
+        addr.add(ModelDescriptionConstants.HOST, hostName);
+        writeLocalDC.get(ModelDescriptionConstants.ADDRESS).set(addr);
+        writeLocalDC.get(ModelDescriptionConstants.OP).set(LocalDomainControllerAddHandler.OPERATION_NAME);
+
+        final ModelNode writeHostName = Util.getWriteAttributeOperation(addr, ModelDescriptionConstants.NAME, hostName);
+
+        final FSTreeConfigurationPersister persister = new FSTreeConfigurationPersister(
+                FSTreeConfigurationPersister.HOST_ROOT,
+                new String[]{ModelDescriptionConstants.HOST, hostName},
+                new ModelNode[]{registerHostModel, writeHostName, writeLocalDC});
+
+        return persister;
+        }
+
         HostXml hostXml = new HostXml(environment.getHostControllerName(), environment.getRunningModeControl().getRunningMode(),
                 environment.isUseCachedDc());
         BackupXmlConfigurationPersister persister =  new BackupXmlConfigurationPersister(file, new QName(Namespace.CURRENT.getUriString(), "host"), hostXml, hostXml);
+
         for (Namespace namespace : Namespace.domainValues()) {
             if (!namespace.equals(Namespace.CURRENT)) {
                 persister.registerAdditionalRootElement(new QName(namespace.getUriString(), "host"), hostXml);
@@ -73,6 +114,13 @@ public class ConfigurationPersisterFactory {
 
     // domain.xml
     public static ExtensibleConfigurationPersister createDomainXmlConfigurationPersister(final ConfigurationFile file, ExecutorService executorService, ExtensionRegistry extensionRegistry) {
+
+        if(domainFSTree) {
+            final FSTreeConfigurationPersister persister = new FSTreeConfigurationPersister(FSTreeConfigurationPersister.DOMAIN_ROOT);
+            extensionRegistry.setWriterRegistry(persister);
+            return persister;
+        }
+
         DomainXml domainXml = new DomainXml(Module.getBootModuleLoader(), executorService, extensionRegistry);
         BackupXmlConfigurationPersister persister = new BackupXmlConfigurationPersister(file, new QName(Namespace.CURRENT.getUriString(), "domain"), domainXml, domainXml);
         for (Namespace namespace : Namespace.domainValues()) {
@@ -81,6 +129,7 @@ public class ConfigurationPersisterFactory {
             }
         }
         extensionRegistry.setWriterRegistry(persister);
+
         return persister;
     }
 

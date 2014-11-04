@@ -43,7 +43,6 @@ import org.jboss.dmr.ModelNode;
 import org.jboss.dmr.ModelType;
 
 
-
 /**
  * {@link org.jboss.as.controller.OperationStepHandler} querying the child types of a given node.
  *

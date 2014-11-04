@@ -65,6 +65,7 @@ import org.jboss.as.controller.operations.validation.IntRangeValidator;
 import org.jboss.as.controller.operations.validation.ParameterValidator;
 import org.jboss.as.controller.operations.validation.StringLengthValidator;
 import org.jboss.as.controller.persistence.ExtensibleConfigurationPersister;
+import org.jboss.as.controller.persistence.fs.FSTreeConfigurationPersister;
 import org.jboss.as.controller.persistence.fs.PersistToFSStepHandler;
 import org.jboss.as.controller.persistence.fs.SyncWithFSStepHandler;
 import org.jboss.as.controller.registry.ManagementResourceRegistration;
@@ -268,9 +269,13 @@ public class ServerRootResourceDefinition extends SimpleResourceDefinition {
         resourceRegistration.registerOperationHandler(SchemaLocationRemoveHandler.DEFINITION, SchemaLocationRemoveHandler.INSTANCE);
         resourceRegistration.registerOperationHandler(ValidateAddressOperationHandler.DEFINITION, ValidateAddressOperationHandler.INSTANCE, false);
 
-        java.io.File fsPersistenceDir = new java.io.File("/home/avoka/git/fs-persistence");
-        resourceRegistration.registerOperationHandler(PersistToFSStepHandler.DEFINITION, new PersistToFSStepHandler(fsPersistenceDir));
-        resourceRegistration.registerOperationHandler(SyncWithFSStepHandler.DEFINITION, new SyncWithFSStepHandler(fsPersistenceDir));
+        if(!isDomain) {
+            resourceRegistration.registerOperationHandler(PersistToFSStepHandler.DEFINITION, new PersistToFSStepHandler(
+                    FSTreeConfigurationPersister.STANDALONE_ROOT));
+            resourceRegistration.registerOperationHandler(SyncWithFSStepHandler.DEFINITION, new SyncWithFSStepHandler(
+                    FSTreeConfigurationPersister.STANDALONE_ROOT));
+            System.out.println("ServerRootResourceDefinition.registerOperations XXXXXXXXX");
+        }
 
         DeploymentUploadBytesHandler.register(resourceRegistration, contentRepository);
         DeploymentUploadURLHandler.register(resourceRegistration, contentRepository);
