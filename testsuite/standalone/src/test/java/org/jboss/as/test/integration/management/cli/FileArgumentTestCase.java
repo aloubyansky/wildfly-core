@@ -22,6 +22,7 @@
 package org.jboss.as.test.integration.management.cli;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -32,7 +33,10 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.jboss.as.cli.CommandContext;
+import org.jboss.as.test.integration.management.util.CLITestUtil;
 import org.jboss.as.test.shared.TestSuiteEnvironment;
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -66,16 +70,28 @@ public class FileArgumentTestCase {
         }
     }
 
+    @After
+    public void cleanup() throws Exception {
+        CommandContext ctx = null;
+        try {
+            ctx = CLITestUtil.getCommandContext();
+            ctx.connectController();
+            ctx.handleSafe(REMOVE_PROP_COMMAND);
+        } finally {
+            if(ctx != null) {
+                ctx.terminateSession();
+            }
+        }
+    }
+
+
     /**
      * Tests that the exit code is 0 value after a successful operation
      * @throws Exception
      */
     @Test
     public void testSuccess() {
-        int exitCode = executeAsFile(new String[]{SET_PROP_COMMAND}, true);
-        if(exitCode == 0) {
-            executeAsFile(new String[]{REMOVE_PROP_COMMAND}, true);
-        }
+        final int exitCode = executeAsFile(new String[]{SET_PROP_COMMAND}, true);
         assertEquals(0, exitCode);
     }
 
@@ -94,13 +110,9 @@ public class FileArgumentTestCase {
      */
     @Test
     public void testValidCommandAfterInvalidCommand() {
-        int exitCode = executeAsFile(new String[]{GET_PROP_COMMAND, SET_PROP_COMMAND}, false);
-        if(exitCode == 0) {
-            executeAsFile(new String[]{REMOVE_PROP_COMMAND}, true);
-        } else {
-            assertFailure(GET_PROP_COMMAND);
-        }
-        assertTrue(exitCode != 0);
+        final int exitCode = executeAsFile(new String[]{GET_PROP_COMMAND, SET_PROP_COMMAND}, false);
+        assertNotEquals(0, exitCode);
+        assertFailure(GET_PROP_COMMAND);
     }
 
     /**
@@ -109,10 +121,9 @@ public class FileArgumentTestCase {
      */
     @Test
     public void testValidCommandBeforeInvalidCommand() {
-        int exitCode = executeAsFile(new String[]{SET_PROP_COMMAND, "bad-wrong-illegal"}, true);
+        final int exitCode = executeAsFile(new String[]{SET_PROP_COMMAND, "bad-wrong-illegal"}, true);
+        assertNotEquals(0, exitCode);
         assertSuccess(GET_PROP_COMMAND);
-        executeAsFile(new String[]{REMOVE_PROP_COMMAND}, true);
-        assertTrue(exitCode != 0);
     }
 
     protected void assertSuccess(String cmd) {
