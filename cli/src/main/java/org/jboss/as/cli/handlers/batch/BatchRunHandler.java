@@ -34,6 +34,7 @@ import org.jboss.as.cli.Util;
 import org.jboss.as.cli.batch.Batch;
 import org.jboss.as.cli.batch.BatchManager;
 import org.jboss.as.cli.batch.BatchedCommand;
+import org.jboss.as.cli.batch.impl.DefaultBatch;
 import org.jboss.as.cli.handlers.BaseOperationCommand;
 import org.jboss.as.cli.handlers.DefaultFilenameTabCompleter;
 import org.jboss.as.cli.handlers.FilenameTabCompleter;
@@ -42,6 +43,7 @@ import org.jboss.as.cli.impl.ArgumentWithValue;
 import org.jboss.as.cli.impl.ArgumentWithoutValue;
 import org.jboss.as.cli.impl.FileSystemPathArgument;
 import org.jboss.as.controller.client.ModelControllerClient;
+import org.jboss.as.controller.client.Operation;
 import org.jboss.dmr.ModelNode;
 
 /**
@@ -70,14 +72,72 @@ public class BatchRunHandler extends BaseOperationCommand {
 
         final boolean v = verbose.isPresent(ctx.getParsedCommandLine());
 
+        final String path = file.getValue(ctx.getParsedCommandLine());
+        final ModelNode headersNode = headers.isPresent(ctx.getParsedCommandLine()) ? headers.toModelNode(ctx) : null;
+
+        final DefaultBatch batch;
+        final BatchManager batchManager = ctx.getBatchManager();
+        if(batchManager.isBatchActive()) {
+            if (path != null) {
+                throw new CommandFormatException("--file is not allowed in the batch mode.");
+            }
+            batch = (DefaultBatch) batchManager.getActiveBatch();
+        } else if(path != null) {
+            final File f = new File(path);
+            if(!f.exists()) {
+                throw new CommandFormatException("File " + f.getAbsolutePath() + " does not exist.");
+            }
+
+            final File currentDir = ctx.getCurrentDir();
+            final File baseDir = f.getParentFile();
+            if(baseDir != null) {
+                ctx.setCurrentDir(baseDir);
+            }
+
+            BufferedReader reader = null;
+            try {
+                reader = new BufferedReader(new FileReader(f));
+                String line = reader.readLine();
+                batchManager.activateNewBatch();
+                while(line != null) {
+                    ctx.handle(line);
+                    line = reader.readLine();
+                }
+                batch = (DefaultBatch) batchManager.getActiveBatch();
+            } catch(IOException e) {
+                throw new CommandFormatException("Failed to read file " + f.getAbsolutePath(), e);
+            } catch(CommandLineException e) {
+                throw new CommandFormatException("Failed to create batch from " + f.getAbsolutePath(), e);
+            } finally {
+                batchManager.discardActiveBatch();
+                if(baseDir != null) {
+                    ctx.setCurrentDir(currentDir);
+                }
+                if(reader != null) {
+                    try {
+                        reader.close();
+                    } catch (IOException e) {}
+                }
+            }
+        } else {
+            throw new CommandFormatException("Without arguments the command can be executed only in the batch mode.");
+        }
+
+        if (batch.size() == 0) {
+            batchManager.discardActiveBatch();
+            throw new CommandFormatException("The batch is empty.");
+        }
+        final Operation composite = batch.toOperation();
+        if (headersNode != null) {
+            composite.getOperation().get(Util.OPERATION_HEADERS).set(headersNode);
+        }
+
         final ModelNode response;
         boolean failed = false;
         try {
-            final ModelNode request = buildRequest(ctx);
-
             final ModelControllerClient client = ctx.getModelControllerClient();
             try {
-                response = client.execute(request);
+                response = client.execute(composite);
             } catch(Exception e) {
                 throw new CommandFormatException("Failed to perform operation: " + e.getLocalizedMessage());
             }

@@ -21,12 +21,15 @@
  */
 package org.jboss.as.cli.batch.impl;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.jboss.as.cli.Util;
 import org.jboss.as.cli.batch.Batch;
 import org.jboss.as.cli.batch.BatchedCommand;
+import org.jboss.as.controller.client.Operation;
+import org.jboss.as.controller.client.OperationBuilder;
 import org.jboss.dmr.ModelNode;
 
 /**
@@ -35,6 +38,7 @@ import org.jboss.dmr.ModelNode;
  */
 public class DefaultBatch implements Batch {
 
+    private OperationBuilder opBuilder;
     private final List<BatchedCommand> commands = new ArrayList<BatchedCommand>();
 
     /* (non-Javadoc)
@@ -107,5 +111,26 @@ public class DefaultBatch implements Batch {
             steps.add(cmd.getRequest());
         }
         return composite;
+    }
+
+    public Operation toOperation() {
+
+        final ModelNode composite = new ModelNode();
+        composite.get(Util.OPERATION).set(Util.COMPOSITE);
+        composite.get(Util.ADDRESS).setEmptyList();
+        final ModelNode steps = composite.get(Util.STEPS);
+
+        opBuilder = new OperationBuilder(composite);
+        for(BatchedCommand cmd : commands) {
+            ((DefaultBatchedCommand)cmd).attachStreams(this);
+            steps.add(cmd.getRequest());
+        }
+
+        return opBuilder.build();
+    }
+
+    int attachFile(File f) {
+        opBuilder.addFileAsAttachment(f);
+        return opBuilder.getInputStreamCount() - 1;
     }
 }

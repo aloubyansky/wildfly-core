@@ -21,6 +21,11 @@
  */
 package org.jboss.as.cli.batch.impl;
 
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 import org.jboss.as.cli.batch.BatchedCommand;
 import org.jboss.dmr.ModelNode;
 
@@ -30,18 +35,34 @@ import org.jboss.dmr.ModelNode;
  */
 public class DefaultBatchedCommand implements BatchedCommand {
 
+    static class StreamParameter {
+        final ModelNode parameterNode;
+        final File f;
+
+        StreamParameter(ModelNode parameterNode, File f) {
+            assert parameterNode != null : "parameter node is null";
+            assert f != null : "file is null";
+            this.parameterNode = parameterNode;
+            this.f = f;
+        }
+    }
+
     private final String command;
-    private final ModelNode request;
+    private ModelNode request;
+    private List<StreamParameter> params = Collections.emptyList();
+
+    public DefaultBatchedCommand(String command) {
+        this(command, null);
+    }
 
     public DefaultBatchedCommand(String command, ModelNode request) {
         if(command == null) {
             throw new IllegalArgumentException("Command is null.");
         }
         this.command = command;
-        if(request == null) {
-            throw new IllegalArgumentException("Request is null.");
+        if(request != null) {
+            this.request = request;
         }
-        this.request = request;
     }
 
     public String getCommand() {
@@ -50,5 +71,31 @@ public class DefaultBatchedCommand implements BatchedCommand {
 
     public ModelNode getRequest() {
         return request;
+    }
+
+    public void setRequest(ModelNode request) {
+        assert request != null : "request is null";
+        this.request = request;
+    }
+
+    public void attachFile(ModelNode parameterNode, File f) {
+        switch(params.size()) {
+            case 0:
+                params = Collections.singletonList(new StreamParameter(parameterNode, f));
+                break;
+            case 1:
+                params = new ArrayList<StreamParameter>(params);
+            default:
+                params.add(new StreamParameter(parameterNode, f));
+        }
+    }
+
+    void attachStreams(DefaultBatch batch) {
+        if(params.isEmpty()) {
+            return;
+        }
+        for(StreamParameter param : params) {
+            param.parameterNode.set(batch.attachFile(param.f));
+        }
     }
 }

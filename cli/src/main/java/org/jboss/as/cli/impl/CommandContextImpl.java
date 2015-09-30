@@ -104,6 +104,7 @@ import org.jboss.as.cli.batch.impl.DefaultBatchedCommand;
 import org.jboss.as.cli.embedded.EmbeddedControllerHandlerRegistrar;
 import org.jboss.as.cli.embedded.EmbeddedServerLaunch;
 import org.jboss.as.cli.handlers.ArchiveHandler;
+import org.jboss.as.cli.handlers.BatchModeCommandHandler;
 import org.jboss.as.cli.handlers.ClearScreenHandler;
 import org.jboss.as.cli.handlers.CommandCommandHandler;
 import org.jboss.as.cli.handlers.ConnectHandler;
@@ -728,11 +729,11 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
                 final ModelNode request = parsedCmd.toOperationRequest(this);
 
                 if (isBatchMode()) {
-                    StringBuilder op = new StringBuilder();
+                    final StringBuilder op = new StringBuilder();
                     op.append(getNodePathFormatter().format(parsedCmd.getAddress()));
                     op.append(line.substring(line.indexOf(':')));
                     DefaultBatchedCommand batchedCmd = new DefaultBatchedCommand(op.toString(), request);
-                    Batch batch = getBatchManager().getActiveBatch();
+                    final Batch batch = getBatchManager().getActiveBatch();
                     batch.add(batchedCmd);
                 } else {
                     set("OP_REQ", request);
@@ -744,16 +745,18 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
                 }
             } else {
                 final String cmdName = parsedCmd.getOperationName();
-                CommandHandler handler = cmdRegistry.getCommandHandler(cmdName.toLowerCase());
+                final CommandHandler handler = cmdRegistry.getCommandHandler(cmdName.toLowerCase());
                 if (handler != null) {
                     if (isBatchMode() && handler.isBatchMode(this)) {
                         if (!(handler instanceof OperationCommand)) {
                             throw new CommandLineException("The command is not allowed in a batch.");
+                        } else if (handler instanceof BatchModeCommandHandler) {
+                            ((BatchModeCommandHandler)handler).addToBatch(this);
                         } else {
                             try {
-                                ModelNode request = ((OperationCommand) handler).buildRequest(this);
-                                BatchedCommand batchedCmd = new DefaultBatchedCommand(line, request);
-                                Batch batch = getBatchManager().getActiveBatch();
+                                final ModelNode request = ((OperationCommand) handler).buildRequest(this);
+                                final BatchedCommand batchedCmd = new DefaultBatchedCommand(line, request);
+                                final Batch batch = getBatchManager().getActiveBatch();
                                 batch.add(batchedCmd);
                             } catch (CommandFormatException e) {
                                 throw new CommandFormatException("Failed to add to batch '" + line + "'", e);

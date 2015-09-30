@@ -23,6 +23,10 @@ package org.jboss.as.cli.handlers;
 
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandFormatException;
+import org.jboss.as.cli.CommandLineException;
+import org.jboss.as.cli.batch.Batch;
+import org.jboss.as.cli.batch.impl.DefaultBatchedCommand;
+import org.jboss.dmr.ModelNode;
 
 
 /**
@@ -48,5 +52,21 @@ public abstract class BatchModeCommandHandler extends BaseOperationCommand {
             return false;
         }
         return true;
+    }
+
+    public void addToBatch(CommandContext ctx) throws CommandLineException {
+        final Batch batch = ctx.getBatchManager().getActiveBatch();
+        addSteps(ctx, batch);
+    }
+
+    protected void addSteps(CommandContext ctx, Batch batch) throws CommandLineException {
+        recognizeArguments(ctx);
+        final ModelNode step = buildBatchStepWithoutHeaders(ctx);
+        addHeaders(ctx, step);
+        batch.add(new DefaultBatchedCommand(ctx.getParsedCommandLine().getOriginalLine(), step));
+    }
+
+    protected ModelNode buildBatchStepWithoutHeaders(CommandContext ctx) throws CommandLineException {
+        return buildRequestWithoutHeaders(ctx);
     }
 }

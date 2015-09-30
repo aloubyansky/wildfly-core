@@ -21,6 +21,9 @@
  */
 package org.jboss.as.cli.batch;
 
+import java.io.File;
+
+import org.jboss.as.cli.CommandFormatException;
 import org.jboss.dmr.ModelNode;
 
 /**
@@ -32,4 +35,6 @@ public interface BatchedCommand {
     String getCommand();
 
     ModelNode getRequest();
+
+    void attachFile(ModelNode parameterNode, File f) throws CommandFormatException;
 }
