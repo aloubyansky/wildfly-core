@@ -21,8 +21,11 @@
  */
 package org.jboss.as.cli.batch.impl;
 
+import java.io.Closeable;
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.jboss.as.cli.Util;
@@ -40,6 +43,7 @@ public class DefaultBatch implements Batch {
 
     private OperationBuilder opBuilder;
     private final List<BatchedCommand> commands = new ArrayList<BatchedCommand>();
+    private List<Closeable> closeables = Collections.emptyList();
 
     /* (non-Javadoc)
      * @see org.jboss.as.cli.batch.Batch#getCommands()
@@ -113,6 +117,7 @@ public class DefaultBatch implements Batch {
         return composite;
     }
 
+    @Override
     public Operation toOperation() {
 
         final ModelNode composite = new ModelNode();
@@ -122,15 +127,54 @@ public class DefaultBatch implements Batch {
 
         opBuilder = new OperationBuilder(composite);
         for(BatchedCommand cmd : commands) {
-            ((DefaultBatchedCommand)cmd).attachStreams(this);
+            cmd.attachStreams(this);
             steps.add(cmd.getRequest());
         }
 
         return opBuilder.build();
     }
 
-    int attachFile(File f) {
+    @Override
+    public int attachFile(File f) {
         opBuilder.addFileAsAttachment(f);
         return opBuilder.getInputStreamCount() - 1;
+    }
+
+    @Override
+    public void closeWithBatch(Closeable closeable) {
+        assert closeable != null : "closeable is null";
+        switch(closeables.size()) {
+            case 0:
+                closeables = Collections.singletonList(closeable);
+                break;
+            case 1:
+                closeables = new ArrayList<Closeable>(closeables);
+            default:
+                closeables.add(closeable);
+        }
+    }
+
+    @Override
+    public void close() throws IOException {
+        if(closeables.isEmpty()) {
+            return;
+        }
+        StringBuilder buf = null;
+        for(Closeable c : closeables) {
+            try {
+                c.close();
+            } catch(IOException e) {
+                if(buf == null) {
+                    buf = new StringBuilder();
+                } else {
+                    buf.append(", ");
+                }
+                buf.append(e.getLocalizedMessage());
+            }
+        }
+        if(buf != null) {
+            throw new IOException("Failed to close resources used in the batch: " + buf.toString());
+        }
+        throw new IllegalStateException("CLOSED BATCH");
     }
 }

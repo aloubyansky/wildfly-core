@@ -34,7 +34,6 @@ import org.jboss.as.cli.Util;
 import org.jboss.as.cli.batch.Batch;
 import org.jboss.as.cli.batch.BatchManager;
 import org.jboss.as.cli.batch.BatchedCommand;
-import org.jboss.as.cli.batch.impl.DefaultBatch;
 import org.jboss.as.cli.handlers.BaseOperationCommand;
 import org.jboss.as.cli.handlers.DefaultFilenameTabCompleter;
 import org.jboss.as.cli.handlers.FilenameTabCompleter;
@@ -75,13 +74,13 @@ public class BatchRunHandler extends BaseOperationCommand {
         final String path = file.getValue(ctx.getParsedCommandLine());
         final ModelNode headersNode = headers.isPresent(ctx.getParsedCommandLine()) ? headers.toModelNode(ctx) : null;
 
-        final DefaultBatch batch;
+        final Batch batch;
         final BatchManager batchManager = ctx.getBatchManager();
         if(batchManager.isBatchActive()) {
             if (path != null) {
                 throw new CommandFormatException("--file is not allowed in the batch mode.");
             }
-            batch = (DefaultBatch) batchManager.getActiveBatch();
+            batch = batchManager.getActiveBatch();
         } else if(path != null) {
             final File f = new File(path);
             if(!f.exists()) {
@@ -103,13 +102,14 @@ public class BatchRunHandler extends BaseOperationCommand {
                     ctx.handle(line);
                     line = reader.readLine();
                 }
-                batch = (DefaultBatch) batchManager.getActiveBatch();
+                batch = batchManager.getActiveBatch();
             } catch(IOException e) {
+                batchManager.discardActiveBatch();
                 throw new CommandFormatException("Failed to read file " + f.getAbsolutePath(), e);
             } catch(CommandLineException e) {
+                batchManager.discardActiveBatch();
                 throw new CommandFormatException("Failed to create batch from " + f.getAbsolutePath(), e);
             } finally {
-                batchManager.discardActiveBatch();
                 if(baseDir != null) {
                     ctx.setCurrentDir(currentDir);
                 }

@@ -21,15 +21,18 @@
  */
 package org.jboss.as.cli.batch;
 
+import java.io.Closeable;
+import java.io.File;
 import java.util.List;
 
+import org.jboss.as.controller.client.Operation;
 import org.jboss.dmr.ModelNode;
 
 /**
  *
  * @author Alexey Loubyansky
  */
-public interface Batch {
+public interface Batch extends Closeable {
 
     /**
      * Adds a command or an operation to the batch.
@@ -84,4 +87,29 @@ public interface Batch {
      * @return  operation request that includes all the commands and operations in the batch
      */
     ModelNode toRequest();
+
+    /**
+     * Generates an operation from the commands and operations in the batch.
+     * Comparing to toRequest() this method allows to attach input streams instead of bytes.
+     *
+     * @return  composite operation request
+     */
+    Operation toOperation();
+
+    /**
+     * Attaches a file to the batch and returns its stream parameter index.
+     *
+     * @param f  the file to attach
+     * @return  index of the stream for this file
+     */
+    int attachFile(File f);
+
+    /**
+     * The passed in closeable will be closed when the batch instance is closed.
+     * This can be used for streams of data that should be kept open (keeping the
+     * temporary filesystem paths, etc) until the batch has been executed.
+     *
+     * @param closeable  resource that should be closed when the batch instance is closed
+     */
+    void closeWithBatch(Closeable closeable);
 }

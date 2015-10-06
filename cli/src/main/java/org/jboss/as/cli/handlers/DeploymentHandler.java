@@ -21,6 +21,7 @@
  */
 package org.jboss.as.cli.handlers;
 
+import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
@@ -121,7 +122,7 @@ public abstract class DeploymentHandler extends BatchModeCommandHandler {
         return ((MountHandle)VFS.mountZipExpanded(archive, VFS.getChild("cli"), tempFileProvider));
     }
 
-    protected String activateNewBatch(CommandContext ctx) {
+    protected String activateNewBatch(CommandContext ctx, Closeable closeable) {
         String currentBatch = null;
         BatchManager batchManager = ctx.getBatchManager();
         if (batchManager.isBatchActive()) {
@@ -129,6 +130,7 @@ public abstract class DeploymentHandler extends BatchModeCommandHandler {
             batchManager.holdbackActiveBatch(currentBatch);
         }
         batchManager.activateNewBatch();
+        batchManager.getActiveBatch().closeWithBatch(closeable);
         return currentBatch;
     }
 

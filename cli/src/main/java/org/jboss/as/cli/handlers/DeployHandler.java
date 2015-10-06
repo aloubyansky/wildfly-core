@@ -23,6 +23,7 @@ package org.jboss.as.cli.handlers;
 
 
 import java.io.BufferedReader;
+import java.io.Closeable;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -60,6 +61,7 @@ import org.jboss.dmr.ModelNode;
 import org.jboss.vfs.TempFileProvider;
 import org.jboss.vfs.VFSUtils;
 import org.jboss.vfs.spi.MountHandle;
+import org.xnio.IoUtils;
 
 /**
  *
@@ -266,7 +268,7 @@ public class DeployHandler extends DeploymentHandler {
 
         final Batch batch = new DefaultBatch();
         addSteps(ctx, batch);
-        final Operation request = ((DefaultBatch)batch).toOperation();
+        final Operation request = batch.toOperation();
         addHeaders(ctx, request.getOperation());
 
         final ModelNode result;
@@ -275,6 +277,8 @@ public class DeployHandler extends DeploymentHandler {
             request.close();
         } catch (Exception e) {
             throw new CommandFormatException("Failed to add the deployment content to the repository: " + e.getLocalizedMessage());
+        } finally {
+            IoUtils.safeClose(batch);
         }
         if (!Util.isSuccess(result)) {
             throw new CommandFormatException(Util.getFailureDescription(result));
@@ -618,8 +622,8 @@ public class DeployHandler extends DeploymentHandler {
 
     protected Batch readScript(CommandContext ctx, ParsedCommandLine args, final File f) throws CommandFormatException {
 
-        TempFileProvider tempFileProvider;
-        MountHandle root;
+        final TempFileProvider tempFileProvider;
+        final MountHandle root;
         try {
             tempFileProvider = TempFileProvider.create("cli", Executors.newSingleThreadScheduledExecutor(), true);
             root = extractArchive(f, tempFileProvider);
@@ -629,7 +633,12 @@ public class DeployHandler extends DeploymentHandler {
 
         final File currentDir = ctx.getCurrentDir();
         ctx.setCurrentDir(root.getMountSource());
-        String holdbackBatch = activateNewBatch(ctx);
+        String holdbackBatch = activateNewBatch(ctx, new Closeable() {
+            @Override
+            public void close() throws IOException {
+                VFSUtils.safeClose(root, tempFileProvider);
+            }
+        });
 
         try {
             String script = this.script.getValue(args);
@@ -670,7 +679,6 @@ public class DeployHandler extends DeploymentHandler {
             // reset current dir in context
             ctx.setCurrentDir(currentDir);
             discardBatch(ctx, holdbackBatch);
-            VFSUtils.safeClose(root, tempFileProvider);
         }
     }
 

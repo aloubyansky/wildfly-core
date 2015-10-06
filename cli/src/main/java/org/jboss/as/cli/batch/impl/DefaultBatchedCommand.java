@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import org.jboss.as.cli.batch.Batch;
 import org.jboss.as.cli.batch.BatchedCommand;
 import org.jboss.dmr.ModelNode;
 
@@ -90,7 +91,8 @@ public class DefaultBatchedCommand implements BatchedCommand {
         }
     }
 
-    void attachStreams(DefaultBatch batch) {
+    @Override
+    public void attachStreams(Batch batch) {
         if(params.isEmpty()) {
             return;
         }

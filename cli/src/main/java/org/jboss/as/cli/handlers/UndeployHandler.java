@@ -23,6 +23,7 @@ package org.jboss.as.cli.handlers;
 
 
 import java.io.BufferedReader;
+import java.io.Closeable;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -324,8 +325,8 @@ public class UndeployHandler extends DeploymentHandler {
             }
 
 
-            TempFileProvider tempFileProvider;
-            MountHandle root;
+            final TempFileProvider tempFileProvider;
+            final MountHandle root;
             try {
                 tempFileProvider = TempFileProvider.create("cli", Executors.newSingleThreadScheduledExecutor(), true);
                 root = extractArchive(f, tempFileProvider);
@@ -335,7 +336,12 @@ public class UndeployHandler extends DeploymentHandler {
 
             final File currentDir = ctx.getCurrentDir();
             ctx.setCurrentDir(root.getMountSource());
-            String holdbackBatch = activateNewBatch(ctx);
+            String holdbackBatch = activateNewBatch(ctx, new Closeable() {
+                @Override
+                public void close() throws IOException {
+                    VFSUtils.safeClose(root, tempFileProvider);
+                }
+            });
 
             try {
                 String script = this.script.getValue(args);
@@ -376,8 +382,6 @@ public class UndeployHandler extends DeploymentHandler {
                 // reset current dir in context
                 ctx.setCurrentDir(currentDir);
                 discardBatch(ctx, holdbackBatch);
-
-                VFSUtils.safeClose(root, tempFileProvider);
             }
         }
 

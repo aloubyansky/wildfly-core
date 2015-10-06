@@ -28,6 +28,7 @@ import java.util.Set;
 
 import org.jboss.as.cli.batch.Batch;
 import org.jboss.as.cli.batch.BatchManager;
+import org.xnio.IoUtils;
 
 /**
  *
@@ -67,6 +68,7 @@ public class DefaultBatchManager implements BatchManager {
         if(activeBatch == null) {
             return false;
         }
+        IoUtils.safeClose(activeBatch);
         activeBatch = null;
         return true;
     }
