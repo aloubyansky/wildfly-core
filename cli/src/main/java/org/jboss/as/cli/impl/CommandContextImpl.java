@@ -184,6 +184,10 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
 
     private static final Logger log = Logger.getLogger(CommandContext.class);
 
+    private static final byte RUNNING = 0;
+    private static final byte TERMINATING = 1;
+    private static final byte TERMINATED = 2;
+
     /**
      * State Tracking
      *
@@ -206,10 +210,12 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
     /** loads command handlers from the domain management model extensions */
     private ExtensionsLoader extLoader;
 
+    private Settings settings;
+    private ConsoleCallback consoleCallback;
     private Console console;
 
     /** whether the session should be terminated */
-    private boolean terminate;
+    private byte terminate = RUNNING;
 
     /** current command line */
     private String cmdLine;
@@ -269,8 +275,6 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
 
     private CliShutdownHook.Handler shutdownHook;
 
-    private InterruptHook interruptHook;
-
     /** command line handling redirection */
     private CommandLineRedirectionRegistration redirection;
 
@@ -280,7 +284,6 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
     private final CLIPrintStream cliPrintStream;
 
     // Store a ref to the default input stream aesh will use before we do any manipulation of stdin
-    private InputStream stdIn = new SettingsBuilder().create().getInputStream();
     private boolean uninstallIO;
 
     private static JaasConfigurationWrapper jaasConfigurationWrapper; // we want this wrapper to be only created once
@@ -383,9 +386,14 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
     protected void initBasicConsole(InputStream consoleInput, boolean start) throws CliInitializationException {
         // this method shouldn't be called twice during the session
         assert console == null : "the console has already been initialized";
-        Settings settings = createSettings(consoleInput);
+        if(settings == null) {
+            settings = createSettings(consoleInput);
+        }
         this.console = Console.Factory.getConsole(this, settings);
-        console.setCallback(initCallback());
+        if(consoleCallback == null) {
+            consoleCallback = initCallback();
+        }
+        console.setCallback(consoleCallback);
         if(start) {
             console.start();
         }
@@ -404,21 +412,19 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
                     if (cmdCompleter == null) {
                         throw new IllegalStateException("The console hasn't been initialized at construction time.");
                     }
-                    if (output.getBuffer() == null)
+                    if (output.getBuffer() == null) {
                         terminateSession();
-                    else {
+                    } else {
                         handleSafe(output.getBuffer().trim());
-                        if (INTERACT && !terminate) {
+                        if (INTERACT && terminate == RUNNING) {
                             console.setPrompt(getPrompt());
                         }
                     }
                     return 0;
-
                 }finally{
                     setActiveProcess(false);
                 }
             }
-
         };
     }
 
@@ -468,7 +474,7 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
         settings.parseOperators(false);
 
         settings.interruptHook(
-                interruptHook = new InterruptHook() {
+                new InterruptHook() {
                     @Override
                     public void handleInterrupt(org.jboss.aesh.console.Console console, Action action) {
                         if(shutdownHook != null ){
@@ -476,6 +482,7 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
                         }else {
                             terminateSession();
                         }
+                        Thread.currentThread().interrupt();
                     }
                 }
         );
@@ -700,7 +707,7 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
 
     @Override
     public boolean isTerminated() {
-        return terminate;
+        return terminate == TERMINATED;
     }
 
     private StringBuilder lineBuffer;
@@ -818,15 +825,17 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
 
     @Override
     public void terminateSession() {
-        if(!terminate) {
+        if(terminate == RUNNING) {
+            terminate = TERMINATING;
             disconnectController();
             restoreStdIO();
-            if(console != null)
+            if(console != null) {
                 console.stop();
+            }
             if (shutdownHook != null) {
                 CliShutdownHook.remove(shutdownHook);
             }
-            terminate = true;
+            terminate = TERMINATED;
         }
     }
 
@@ -977,6 +986,22 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
 
     @Override
     public void connectController(String controller) throws CommandLineException {
+
+        if(console == null) {
+            initBasicConsole(null, false);
+        }
+        console.controlled();
+        try {
+            if (!console.running()) {
+                console.start();
+            }
+            doConnect(controller);
+        } finally {
+            console.continuous();
+        }
+    }
+
+    protected void doConnect(String controller) throws CommandLineException {
         ControllerAddress address = addressResolver.resolveAddress(controller);
 
         // In case the alias mappings cause us to enter some form of loop or a badly
@@ -1149,7 +1174,6 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
             final long start = System.currentTimeMillis();
             final long timeoutMillis = config.getConnectionTimeout() + 1000;
             boolean tryConnection = true;
-            int i = 1;
             while (tryConnection) {
                 final ModelNode response = client.execute(builder.buildRequest());
                 if (!Util.isSuccess(response)) {
@@ -1227,6 +1251,9 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
             extLoader.resetHandlers();
         }
         promptConnectPart = null;
+        if(console != null && terminate == RUNNING) {
+            console.setPrompt(getPrompt());
+        }
     }
 
     @Override
@@ -1454,7 +1481,7 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
             console.start();
         }
 
-        while(!isTerminated() && console.running()){
+        while(/*!isTerminated() && */console.running()) {
             try {
                 Thread.sleep(10);
             } catch (InterruptedException e) {
@@ -1488,10 +1515,9 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
                         || Util.TRUE.equals(parsedCmd.getPropertyValue(Util.RESTART))) {
                     // do nothing
                 } else {
-                    disconnectController();
                     printLine("");
                     printLine("The controller has closed the connection.");
-                    printLine("(Although the command prompt may still wrongly indicate connection until the next line is entered)");
+                    disconnectController();
                 }
             } else {
                 // we don't disconnect here because the connection may be closed by another
