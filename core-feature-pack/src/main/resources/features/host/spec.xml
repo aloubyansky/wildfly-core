@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feature-spec name="host" xmlns="urn:wildfly:pm-feature-spec:1.0">
+
+  <annotation name="add">
+    <elem name="addr-params" value="host"/>
+  </annotation>
+
+  <params>
+    <param name="host" default="PM_UNDEFINED" feature-id="true"/>
+  </params>
+</feature-spec>

@@ -164,6 +164,8 @@
         <version.org.zanata.plugin>3.9.1</version.org.zanata.plugin>
         <version.xml.plugin>1.0.1</version.xml.plugin>
 
+        <version.org.jboss.pm.feature-pack-build-maven-plugin>1.0.0.Alpha-SNAPSHOT</version.org.jboss.pm.feature-pack-build-maven-plugin>
+
         <!-- Modularized JDK support (various workarounds) - activated via profile -->
         <modular.jdk.args/>
         <modular.jdk.props/>
@@ -636,6 +638,11 @@
                     <groupId>org.wildfly.build</groupId>
                     <artifactId>wildfly-server-provisioning-maven-plugin</artifactId>
                     <version>${version.org.wildfly.build-tools}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.jboss.pm</groupId>
+                    <artifactId>wildfly-feature-pack-maven-plugin</artifactId>
+                    <version>${version.org.jboss.pm.feature-pack-build-maven-plugin}</version>
                 </plugin>
             </plugins>
         </pluginManagement>

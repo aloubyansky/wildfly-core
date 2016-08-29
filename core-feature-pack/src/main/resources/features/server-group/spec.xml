@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feature-spec name="server-group" xmlns="urn:wildfly:pm-feature-spec:1.0">
+  <annotation name="add">
+    <elem name="addr-params" value="server-group"/>
+  </annotation>
+  <refs>
+    <ref feature="socket-binding-group"/>
+    <ref feature="profile"/>
+  </refs>
+  <params>
+    <param name="server-group" feature-id="true"/>
+    <param name="host" default="PM_UNDEFINED"/>
+    <param name="profile" default="default" nillable="false"/> <!-- default is here on purpose, as an exception for the domain configs -->
+    <param name="socket-binding-group" default="standard-sockets" nillable="false"/> <!-- default is here on purpose, as an exception for the domain configs -->
+  </params>
+</feature-spec>

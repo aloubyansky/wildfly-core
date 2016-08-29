@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feature-spec name="deployment-scanner" xmlns="urn:wildfly:pm-feature-spec:1.0">
+  <annotation name="add">
+    <elem name="addr-params" value="host,profile,subsystem,scanner"/>
+  </annotation>
+  <refs>
+    <ref feature="subsystem"/>
+  </refs>
+  <params>
+    <param name="host" default="PM_UNDEFINED" feature-id="true"/>
+    <param name="profile" default="PM_UNDEFINED" feature-id="true"/>
+    <param name="subsystem" feature-id="true"/>
+    <param name="scanner" feature-id="true"/>
+    <param name="path" default="deployments"/>
+    <param name="relative-to" default="jboss.server.base.dir"/>
+    <param name="scan-interval" default="5000"/>
+    <param name="runtime-failure-causes-rollback" default="${jboss.deployment.scanner.rollback.on.failure:false}"/>
+  </params>
+  <packages>
+    <package name="org.jboss.as.deployment-scanner.main"/>
+  </packages>
+</feature-spec>

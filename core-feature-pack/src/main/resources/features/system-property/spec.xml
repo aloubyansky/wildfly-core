@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feature-spec name="system-property" xmlns="urn:wildfly:pm-feature-spec:1.0">
+  <annotation name="add">
+    <elem name="addr-params" value="system-property"/>
+  </annotation>
+  <params>
+    <param name="system-property" feature-id="true"/>
+    <param name="value" nillable="false"/>
+  </params>
+</feature-spec>

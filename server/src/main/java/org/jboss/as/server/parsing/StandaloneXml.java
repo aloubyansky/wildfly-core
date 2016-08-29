@@ -115,8 +115,68 @@ public final class StandaloneXml implements XMLElementReader<List<ModelNode>>, X
                 break;
         }
 
+//        logOps(operationList);
     }
+/*
+    private void logOps(List<ModelNode> ops) {
 
+        final Path path = Paths.get("/home/olubyans/git/bootops/logged/" + Thread.currentThread().getName() + ".log");
+        try(BufferedWriter writer = Files.newBufferedWriter(path, StandardOpenOption.CREATE, StandardOpenOption.APPEND)) {
+            for(ModelNode op : ops) {
+                writer.write(op.toJSONString(true));
+//                final StringBuilder buf = new StringBuilder();
+//                buf.append('/');
+//                if(op.hasDefined("address")) {
+//                    final List<Property> props = op.get("address").asPropertyList();
+//                    if(!props.isEmpty()) {
+//                        Property prop = props.get(0);
+//                        buf.append(prop.getName()).append('=').append(prop.getValue().asString());
+//                        if(props.size() > 1) {
+//                            for(int i = 1; i < props.size(); ++i) {
+//                                prop = props.get(i);
+//                                buf.append('/').append(prop.getName()).append('=').append(prop.getValue().asString());
+//                            }
+//                        }
+//                    }
+//                }
+//                buf.append(':').append(op.get("operation").asString());
+//                if (op.keys().size() > 2) {
+//                    buf.append('(');
+//                    int p = 0;
+//                    for (String key : op.keys()) {
+//                        if (key.equals("address") || key.equals("operation") || !op.hasDefined(key)) {
+//                            continue;
+//                        }
+//                        if(p++ > 0) {
+//                            buf.append(',');
+//                        }
+//                        buf.append(key).append("=");
+//                        final ModelNode value = op.get(key);
+//                        final boolean complexType = value.getType().equals(ModelType.OBJECT) ||
+//                                value.getType().equals(ModelType.LIST) ||
+//                                value.getType().equals(ModelType.PROPERTY);
+//                        final String strValue = value.asString();
+//                        if(!complexType) {
+//                            buf.append("\"");
+//                            if(!strValue.isEmpty() && strValue.charAt(0) == '$') {
+//                                buf.append('\\');
+//                            }
+//                        }
+//                        buf.append(strValue);
+//                        if(!complexType) {
+//                            buf.append('"');
+//                        }
+//                    }
+//                    buf.append(')');
+//                }
+//                writer.write(buf.toString());
+                writer.newLine();
+            }
+        } catch (IOException e) {
+            throw new IllegalStateException(e);
+        }
+    }
+*/
     @Override
     public void writeContent(final XMLExtendedStreamWriter writer, final ModelMarshallingContext context)
             throws XMLStreamException {

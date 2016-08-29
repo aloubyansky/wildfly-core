@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feature-group-spec name="standalone-profile" xmlns="urn:wildfly:pm-feature-group:1.0">
+
+    <feature-group name="basic-profile"/>
+
+    <feature-group name="discovery"/>
+    <feature spec="elytron">
+        <feature-group name="elytron-app">
+            <include feature-id="elytron-security-domain:security-domain=ApplicationDomain">
+                <feature spec="elytron-security-domain-realm">
+                    <param name="realm" value="{realm=local}"/>
+                </feature>
+            </include>
+        </feature-group>
+        <feature-group name="elytron-management"/>
+    </feature>
+    <feature-group name="security-manager"/>
+
+</feature-group-spec>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feature-spec name="server-group-jvm" xmlns="urn:wildfly:pm-feature-spec:1.0">
+  <annotation name="add">
+    <elem name="addr-params" value="server-group,jvm"/>
+  </annotation>
+  <refs>
+    <ref feature="server-group"/>
+  </refs>
+  <params>
+    <param name="server-group" feature-id="true"/>
+    <param name="jvm" feature-id="true"/>
+    <param name="heap-size"/>
+    <param name="max-heap-size"/>
+  </params>
+</feature-spec>

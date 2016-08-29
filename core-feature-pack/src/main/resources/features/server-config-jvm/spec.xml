@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feature-spec name="server-config-jvm" xmlns="urn:wildfly:pm-feature-spec:1.0">
+  <annotation name="add">
+    <elem name="addr-params" value="host,server-config,jvm"/>
+  </annotation>
+  <refs>
+    <ref feature="host" nillable="true"/>
+    <ref feature="server-config"/>
+  </refs>
+  <params>
+    <param name="host" feature-id="true"/>
+    <param name="server-config" feature-id="true"/>
+    <param name="jvm" feature-id="true"/>
+  </params>
+</feature-spec>

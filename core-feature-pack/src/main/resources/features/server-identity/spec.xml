@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feature-spec name="server-identity" xmlns="urn:wildfly:pm-feature-spec:1.0">
+  <annotation name="add">
+    <elem name="addr-params" value="host,core-service,security-realm,server-identity"/>
+  </annotation>
+  <refs>
+    <ref feature="host" nillable="true"/>
+    <ref feature="security-realm"/>
+  </refs>
+  <params>
+    <param name="host" default="PM_UNDEFINED" feature-id="true"/>
+    <param name="core-service" default="management" feature-id="true"/>
+    <param name="security-realm" feature-id="true"/>
+    <param name="server-identity" feature-id="true"/>
+    <param name="keystore-path"/>
+    <param name="keystore-relative-to" default="jboss.server.config.dir"/>
+    <param name="keystore-password"/>
+    <param name="alias"/>
+    <param name="key-password"/>
+    <param name="generate-self-signed-certificate-host" default="localhost"/>
+  </params>
+</feature-spec>

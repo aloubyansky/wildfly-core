@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feature-group-spec name="elytron-common" xmlns="urn:wildfly:pm-feature-group:1.0">
+        <!-- common -->
+        <feature spec="elytron-provider">
+            <param name="provider-loader" value="elytron"/>
+            <param name="module" value="org.wildfly.security.elytron"/>
+        </feature>
+        <feature spec="elytron-provider">
+            <param name="provider-loader" value="openssl"/>
+            <param name="module" value="org.wildfly.openssl"/>
+        </feature>
+        <feature spec="elytron-aggregate-providers">
+            <param name="aggregate-providers" value="combined-providers"/>
+            <param name="providers" value="[&quot;elytron&quot;,&quot;openssl&quot;]"/>
+        </feature>
+        <feature spec="elytron-identity-realm">
+            <param name="identity-realm" value="local"/>
+            <param name="identity" value="&quot;\$local&quot;"/>
+        </feature>
+        <feature spec="elytron-file-audit-log">
+            <param name="relative-to" value="jboss.server.log.dir"/>
+        </feature>
+        <feature spec="elytron-constant-realm-mapper">
+            <param name="constant-realm-mapper" value="local"/>
+            <param name="realm-name" value="local"/>
+        </feature>
+        <feature spec="elytron-http-server-mechanism"/>
+        <feature spec="elytron-simple-permission-mapper">
+            <param name="simple-permission-mapper" value="default-permission-mapper"/>
+            <param name="mapping-mode" value="first"/>
+            <feature spec="elytron-simple-permission-mapper-permission">
+                <param name="permission-mapping" value="{principals=[anonymous]}"/>
+            </feature>
+            <feature spec="elytron-simple-permission-mapper-permission">
+                <param name="permission-mapping" value="{match-all=true,permissions=[class-name=org.wildfly.security.auth.permission.LoginPermission]}"/>
+            </feature>
+        </feature>
+        <feature spec="elytron-simple-role-decoder">
+            <param name="simple-role-decoder" value="groups-to-roles"/>
+            <param name="attribute" value="groups"/>
+        </feature>
+        <feature spec="elytron-sasl-server-factory">
+            <param name="provider-sasl-server-factory" value="global"/>
+        </feature>
+        <feature spec="elytron-mechanism-filtering-sasl-server-factory">
+            <param name="mechanism-provider-filtering-sasl-server-factory" value="elytron"/>
+            <param name="sasl-server-factory" value="global"/>
+            <param name="filters" value="[{provider-name=WildFlyElytron}]"/>
+        </feature>
+        <feature spec="elytron-configurable-sasl-server-factory">
+            <param name="configurable-sasl-server-factory" value="configured"/>
+            <param name="sasl-server-factory" value="elytron"/>
+            <param name="properties" value="{wildfly.sasl.local-user.default-user=&quot;\$local&quot;}"/>
+        </feature>
+        <feature spec="elytron-constant-role-mapper">
+            <param name="constant-role-mapper" value="super-user-mapper"/>
+            <param name="roles" value="[&quot;SuperUser&quot;]"/>
+        </feature>
+</feature-group-spec>
