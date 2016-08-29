@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feature-spec name="host-exclude" xmlns="urn:wildfly:pm-feature-spec:1.0">
+  <annotation name="add">
+    <elem name="addr-params" value="host-exclude"/>
+  </annotation>
+  <params>
+    <param name="host-exclude" feature-id="true"/>
+    <param name="host-release" nillable="false"/>
+    <param name="excluded-extensions" nillable="false"/>
+  </params>
+</feature-spec>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feature-spec name="security-realm" xmlns="urn:wildfly:pm-feature-spec:1.0">
+  <annotation name="add">
+    <elem name="addr-params" value="host,core-service,security-realm"/>
+  </annotation>
+  <refs>
+    <ref feature="host" nillable="true"/>
+  </refs>
+  <params>
+    <param name="security-realm" feature-id="true"/>
+    <param name="host" default="PM_UNDEFINED" feature-id="true"/>
+    <param name="core-service" default="management" feature-id="true"/>
+    <param name="map-groups-to-roles" nillable="true"/>
+  </params>
+</feature-spec>

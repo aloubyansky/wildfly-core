@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feature-group-spec name="access-control" xmlns="urn:wildfly:pm-feature-group:1.0">
+    <feature spec="access-control">
+        <param name="provider" value="simple"/>
+        <feature spec="access-control-role">
+            <param name="role-mapping" value="SuperUser"/>
+            <feature spec="access-control-role-mapping">
+                <param name="include" value="user-\$local"/>
+                <param name="name" value="&quot;\$local&quot;"/>
+            </feature>
+        </feature>
+    </feature>
+</feature-group-spec>

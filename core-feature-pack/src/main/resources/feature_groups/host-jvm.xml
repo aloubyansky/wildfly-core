@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feature-group-spec name="host-jvm" xmlns="urn:wildfly:pm-feature-group:1.0">
+    <feature spec="jvm">
+        <param name="heap-size" value="64m"/>
+        <param name="max-heap-size" value="256m"/>
+        <param name="environment-variables" value="{MALLOC_ARENA_MAX=1}"/>
+        <feature spec="jvm-option">
+            <param name="jvm-option" value="&quot;-server&quot;"/>
+        </feature>
+        <feature spec="jvm-option">
+            <param name="jvm-option" value="&quot;-XX:MetaspaceSize=96m&quot;"/>
+        </feature>
+        <feature spec="jvm-option">
+            <param name="jvm-option" value="&quot;-XX:MaxMetaspaceSize=256m&quot;"/>
+        </feature>
+    </feature>
+</feature-group-spec>

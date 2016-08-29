@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feature-spec name="domain-controller" xmlns="urn:wildfly:pm-feature-spec:1.0">
+  <annotation name="write-attribute">
+    <elem name="addr-params" value="host"/>
+  </annotation>
+  <refs>
+    <ref feature="host"/>
+  </refs>
+  <params>
+    <param name="host" feature-id="true"/>
+    <param name="domain-controller"/>
+  </params>
+</feature-spec>

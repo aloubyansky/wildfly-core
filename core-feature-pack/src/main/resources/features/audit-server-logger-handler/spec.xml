@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feature-spec name="audit-server-logger-handler" xmlns="urn:wildfly:pm-feature-spec:1.0">
+  <annotation name="add">
+    <elem name="addr-params" value="host,core-service,access,server-logger,handler"/>
+  </annotation>
+  <refs>
+    <ref feature="audit-server-logger"/>
+    <ref feature="audit-file-handler">
+      <param name="handler" maps-to="file-handler"/>
+      <param name="access" maps-to="access"/>
+      <param name="host" maps-to="host"/>
+      <param name="core-service" maps-to="core-service"/>
+    </ref>
+  </refs>
+  <params>
+    <param name="host" default="PM_UNDEFINED" feature-id="true"/>
+    <param name="core-service" default="management" feature-id="true"/>
+    <param name="access" feature-id="true"/>
+    <param name="server-logger" feature-id="true"/>
+    <param name="handler" default="server-file" feature-id="true"/>
+  </params>
+</feature-spec>

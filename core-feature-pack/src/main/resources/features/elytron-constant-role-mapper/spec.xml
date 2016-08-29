@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feature-spec name="elytron-constant-role-mapper" xmlns="urn:wildfly:pm-feature-spec:1.0">
+  <annotation name="add">
+    <elem name="addr-params" value="host,profile,subsystem,constant-role-mapper"/>
+    <elem name="op-params" value="roles"/>
+  </annotation>
+  <refs>
+    <ref feature="elytron"/>
+  </refs>
+  <params>
+    <param name="host" default="PM_UNDEFINED" feature-id="true"/>
+    <param name="profile" default="PM_UNDEFINED" feature-id="true"/>
+    <param name="subsystem" feature-id="true"/>
+    <param name="constant-role-mapper" feature-id="true"/>
+    <param name="roles" nillable="false"/>
+  </params>
+</feature-spec>

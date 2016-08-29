@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feature-spec name="socket-binding-group" xmlns="urn:wildfly:pm-feature-spec:1.0">
+  <annotation name="add">
+    <elem name="addr-params" value="socket-binding-group"/>
+  </annotation>
+  <refs>
+    <ref feature="interface">
+      <param name="default-interface" maps-to="interface"/>
+    </ref>
+  </refs>
+  <params>
+    <param name="socket-binding-group" default="standard-sockets" feature-id="true"/>
+    <param name="default-interface" default="public"/>
+    <param name="port-offset" nillable="true"/>
+  </params>
+</feature-spec>

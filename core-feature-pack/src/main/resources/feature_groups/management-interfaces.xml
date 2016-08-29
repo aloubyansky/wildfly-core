@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feature-group-spec name="management-interfaces" xmlns="urn:wildfly:pm-feature-group:1.0">
+    <feature spec="management-interface-http-interface">
+        <param name="socket-binding" value="management-http"/>
+        <param name="http-upgrade" value="{enabled=true}"/>
+    </feature>
+</feature-group-spec>

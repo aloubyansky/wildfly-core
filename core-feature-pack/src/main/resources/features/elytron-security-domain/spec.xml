@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feature-spec name="elytron-security-domain" xmlns="urn:wildfly:pm-feature-spec:1.0">
+  <annotation name="add">
+    <elem name="addr-params" value="host,profile,subsystem,security-domain"/>
+    <elem name="op-params" value="default-realm,permission-mapper,security-event-listener,realms,trusted-security-domains"/>
+  </annotation>
+  <provides>
+    <capability name="$profile.org.wildfly.security.security-domain.$security-domain"/>
+  </provides>
+  <requires>
+    <capability name="$profile.org.wildfly.security.permission-mapper.$permission-mapper"/>
+  </requires>
+  <refs>
+    <ref feature="elytron"/>
+    <ref feature="elytron-properties-realm">
+      <param name="host" maps-to="host"/>
+      <param name="profile" maps-to="profile"/>
+      <param name="subsystem" maps-to="subsystem"/>
+      <param name="default-realm" maps-to="properties-realm"/>
+    </ref>
+  </refs>
+  <params>
+    <param name="host" default="PM_UNDEFINED" feature-id="true"/>
+    <param name="profile" default="PM_UNDEFINED" feature-id="true"/>
+    <param name="subsystem" feature-id="true"/>
+    <param name="security-domain" feature-id="true"/>
+    <param name="default-realm" nillable="false"/>
+    <param name="permission-mapper" default="default-permission-mapper"/>
+    <param name="security-event-listener" nillable="true"/>
+    <param name="realms" nillable="false"/>
+    <param name="trusted-security-domains" nillable="true"/>
+  </params>
+</feature-spec>

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feature-spec name="core-management" xmlns="urn:wildfly:pm-feature-spec:1.0">
+  <annotation name="add">
+    <elem name="addr-params" value="host,profile,subsystem"/>
+    <elem name="op-params"/>
+  </annotation>
+  <refs>
+    <ref feature="host" nillable="true"/>
+    <ref feature="profile" include="true" nillable="true"/>
+    <ref feature="extension" include="true"/>
+  </refs>
+  <params>
+    <param name="host" default="PM_UNDEFINED" feature-id="true"/>
+    <param name="profile" default="PM_UNDEFINED" feature-id="true"/>
+    <param name="subsystem" default="core-management" feature-id="true"/>
+    <param name="extension" default="org.wildfly.extension.core-management"/>
+  </params>
+  <packages>
+    <package name="org.wildfly.extension.core-management.main"/>
+  </packages>
+</feature-spec>

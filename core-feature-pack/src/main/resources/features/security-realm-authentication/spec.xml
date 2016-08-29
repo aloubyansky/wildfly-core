@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feature-spec name="security-realm-authentication" xmlns="urn:wildfly:pm-feature-spec:1.0">
+  <annotation name="add">
+    <elem name="addr-params" value="host,core-service,security-realm,authentication"/>
+  </annotation>
+  <refs>
+    <ref feature="security-realm"/>
+  </refs>
+  <params>
+    <param name="host" default="PM_UNDEFINED" feature-id="true"/>
+    <param name="core-service" default="management" feature-id="true"/>
+    <param name="security-realm" feature-id="true"/>
+    <param name="authentication" feature-id="true"/>
+    <param name="default-user"/>
+    <param name="skip-group-loading"/>
+    <param name="allowed-users" nillable="true"/>
+  </params>
+</feature-spec>

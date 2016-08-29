@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feature-spec name="jmx" xmlns="urn:wildfly:pm-feature-spec:1.0">
+  <annotation name="add">
+    <elem name="addr-params" value="host,profile,subsystem"/>
+    <elem name="op-params"/>
+  </annotation>
+  <provides>
+    <capability name="$profile.org.wildfly.management.jmx"/>
+  </provides>
+  <refs>
+    <ref feature="host" nillable="true"/>
+    <ref feature="profile" include="true" nillable="true"/>
+    <ref feature="extension" include="true"/>
+  </refs>
+  <params>
+    <param name="host" default="PM_UNDEFINED" feature-id="true"/>
+    <param name="profile" default="PM_UNDEFINED" feature-id="true"/>
+    <param name="subsystem" default="jmx" feature-id="true"/>
+    <param name="extension" default="org.jboss.as.jmx"/>
+  </params>
+  <packages>
+    <package name="org.jboss.as.jmx.main"/>
+  </packages>
+</feature-spec>

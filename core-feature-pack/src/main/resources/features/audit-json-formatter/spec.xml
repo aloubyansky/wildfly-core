@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feature-spec name="audit-json-formatter" xmlns="urn:wildfly:pm-feature-spec:1.0">
+  <annotation name="add">
+    <elem name="addr-params" value="host,core-service,access,json-formatter"/>
+  </annotation>
+  <refs>
+    <ref feature="audit"/>
+  </refs>
+  <params>
+    <param name="host" default="PM_UNDEFINED" feature-id="true"/>
+    <param name="core-service" default="management" feature-id="true"/>
+    <param name="access" feature-id="true"/>
+    <param name="json-formatter" default="json-formatter" feature-id="true"/>
+  </params>
+</feature-spec>

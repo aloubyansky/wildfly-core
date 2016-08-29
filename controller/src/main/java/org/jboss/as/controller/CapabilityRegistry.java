@@ -146,6 +146,24 @@ public final class CapabilityRegistry implements ImmutableCapabilityRegistry, Po
     @Override
     public void registerCapability(RuntimeCapabilityRegistration capabilityRegistration) {
         writeLock.lock();
+
+/*        final Path path = Paths.get("/home/olubyans/git/bootops/capabilities.txt");
+        try(BufferedWriter writer = Files.newBufferedWriter(path, StandardOpenOption.CREATE, StandardOpenOption.APPEND)) {
+            writer.write("Registering capability " + capabilityRegistration.getCapabilityName());
+            writer.newLine();
+            for(RegistrationPoint point : capabilityRegistration.getRegistrationPoints()) {
+                writer.write(" - " + point.getAddress() + " #" + point.getAttribute());
+                writer.newLine();
+            }
+            if("org.wildfly.clustering.cache.default-singleton-service-builder-factory.server".equals(capabilityRegistration.getCapabilityName())) {
+                new Exception().printStackTrace();
+            }
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+*/
+
         try {
             CapabilityId capabilityId = capabilityRegistration.getCapabilityId();
             RegistrationPoint rp = capabilityRegistration.getOldestRegistrationPoint();

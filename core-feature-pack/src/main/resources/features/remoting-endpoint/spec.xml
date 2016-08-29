@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feature-spec name="remoting-endpoint" xmlns="urn:wildfly:pm-feature-spec:1.0">
+  <annotation name="add">
+    <elem name="addr-params" value="host,profile,subsystem,configuration"/>
+  </annotation>
+  <provides>
+    <capability name="$profile.remoting.endpoint"/>
+  </provides>
+  <requires>
+    <capability name="$profile.org.wildfly.io.worker.$worker"/>
+  </requires>
+  <refs>
+    <ref feature="remoting"/>
+  </refs>
+  <params>
+    <param name="host" default="PM_UNDEFINED" feature-id="true"/>
+    <param name="profile" default="PM_UNDEFINED" feature-id="true"/>
+    <param name="subsystem" feature-id="true"/>
+    <param name="configuration" default="endpoint" feature-id="true"/>
+    <param name="worker" default="default"/>
+  </params>
+</feature-spec>

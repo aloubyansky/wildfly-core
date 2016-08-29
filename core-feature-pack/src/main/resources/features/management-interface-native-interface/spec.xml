@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feature-spec name="management-interface-native-interface" xmlns="urn:wildfly:pm-feature-spec:1.0">
+  <annotation name="add">
+    <elem name="addr-params" value="host,core-service,management-interface"/>
+  </annotation>
+  <provides>
+    <capability name="org.wildfly.management.native-interface"/>
+  </provides>
+  <requires>
+    <capability name="org.wildfly.network.interface.$interface"/>
+    <capability name="org.wildfly.security.ssl-context.$ssl-context" optional="true"/>
+  </requires>
+  <refs>
+    <ref feature="host" nillable="true"/>
+  </refs>
+  <params>
+    <param name="host" default="PM_UNDEFINED" feature-id="true"/>
+    <param name="core-service" default="management" feature-id="true"/>
+    <param name="management-interface" default="native-interface" feature-id="true"/>
+    <param name="interface" nillable="false"/>
+    <param name="port" nillable="false"/>
+    <param name="security-realm" nillable="true"/>
+    <param name="ssl-context" nillable="true"/>
+    <param name="sasl-protocol" nillable="true"/>
+    <param name="sasl-authentication-factory" nillable="true"/>
+  </params>
+</feature-spec>

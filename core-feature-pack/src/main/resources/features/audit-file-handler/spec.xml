@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feature-spec name="audit-file-handler" xmlns="urn:wildfly:pm-feature-spec:1.0">
+  <annotation name="add">
+    <elem name="addr-params" value="host,core-service,access,file-handler"/>
+  </annotation>
+  <refs>
+    <ref feature="audit"/>
+    <ref feature="audit-json-formatter">
+      <param name="host" maps-to="host"/>
+      <param name="core-service" maps-to="core-service"/>
+      <param name="access" maps-to="access"/>
+      <param name="formatter" maps-to="json-formatter"/>
+    </ref>
+  </refs>
+  <params>
+    <param name="host" default="PM_UNDEFINED" feature-id="true"/>
+    <param name="core-service" default="management" feature-id="true"/>
+    <param name="access" feature-id="true"/>
+    <param name="file-handler" default="file" feature-id="true"/>
+    <param name="formatter" default="json-formatter"/>
+    <param name="path" default="audit-log.log"/>
+    <param name="relative-to" default="jboss.server.data.dir"/>
+  </params>
+</feature-spec>
