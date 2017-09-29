@@ -3509,7 +3509,6 @@ public interface ControllerLogger extends BasicLogger {
             "Full support for this kind of configuration cannot be provided when an expression is used.")
     void attributeExpressionDeprecated(String name, String address);
 
-
     /**
      * A message for the service status report for unavailable dependencies.
      *
@@ -3526,4 +3525,6 @@ public interface ControllerLogger extends BasicLogger {
             "to learn more about the deprecation.")
     String operationDeprecatedMessage(String name, String address);
 
+    @Message(id = 450, value = "Cannot synchronize the model due to missing extensions: %s")
+    OperationFailedException missingExtensions(Set<String> missingExtensions);
 }
