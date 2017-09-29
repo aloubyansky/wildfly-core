@@ -3509,7 +3509,6 @@ public interface ControllerLogger extends BasicLogger {
             "Full support for this kind of configuration cannot be provided when an expression is used.")
     void attributeExpressionDeprecated(String name, String address);
 
-
     /**
      * A message for the service status report for unavailable dependencies.
      *
@@ -3520,4 +3519,6 @@ public interface ControllerLogger extends BasicLogger {
     @Message(id = 448, value = "%s additional services are down due to their dependencies being missing or failed")
     String servicesWithTransitiveUnavailability(int count);
 
+    @Message(id = 449, value = "Cannot synchronize the model due to missing extensions: %s")
+    OperationFailedException missingExtensions(Set<String> missingExtensions);
 }
