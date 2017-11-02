@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+
+<feature-spec xmlns="urn:wildfly:pm-feature-spec:1.0" name="core-service.management">
+    <refs>
+      <ref feature="host" nillable="true"/>
+  </refs>
+  <params>
+    <param name="host" default="PM_UNDEFINED" feature-id="true"/>
+    <param name="core-service" feature-id="true" default="management"/>
+  </params>
+</feature-spec>

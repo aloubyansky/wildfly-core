@@ -9,7 +9,7 @@
     </ref>
   </refs>
   <params>
-    <param name="socket-binding-group" default="standard-sockets" feature-id="true"/>
+    <param name="socket-binding-group" feature-id="true"/>
     <param name="default-interface" default="public"/>
     <param name="port-offset" nillable="true"/>
   </params>

@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <feature-group-spec name="host-profile" xmlns="urn:wildfly:pm-feature-group:1.0">
-    <feature spec="elytron">
+    <feature spec="subsystem.elytron">
         <feature-group name="elytron-common">
-            <include feature-id="elytron-file-audit-log:file-audit-log=local-audit">
+            <include feature-id="subsystem.elytron.file-audit-log:file-audit-log=local-audit">
                 <param name="relative-to" value="jboss.domain.log.dir"/>
             </include>
         </feature-group>
         <feature-group name="elytron-management">
-            <include feature-id="elytron-properties-realm:properties-realm=ManagementRealm">
+            <include feature-id="subsystem.elytron.properties-realm:properties-realm=ManagementRealm">
                 <param name="users-properties" value="{path=mgmt-users.properties,relative-to=jboss.domain.config.dir,digest-realm-name=ManagementRealm}"/>
                 <param name="groups-properties" value="{path=mgmt-groups.properties,relative-to=jboss.domain.config.dir}"/>
             </include>
-            <include feature-id="elytron-http-authentication-factory:http-authentication-factory=management-http-authentication">
+            <include feature-id="subsystem.elytron.http-authentication-factory:http-authentication-factory=management-http-authentication">
                 <param name="mechanism-configurations" value="[{mechanism-name=BASIC,mechanism-realm-configurations=[{realm-name=Management Realm}]}]"/>
             </include>
         </feature-group>

@@ -1,0 +1,23 @@
+<?xml version="1.0" ?>
+
+<feature-spec xmlns="urn:wildfly:pm-feature-spec:1.0" name="core-service.management.security-realm.server-identity.kerberos.keytab">
+    <annotation name="add">
+        <elem name="op-params" value="debug,for-hosts,path,relative-to"/>
+        <elem name="addr-params" value="core-service,security-realm,server-identity,keytab"/>
+    </annotation>
+    <refs>
+        <ref feature="core-service.management.security-realm.server-identity.kerberos"/>
+        <ref feature="core-service.management.security-realm"/>
+        <ref feature="core-service.management"/>
+    </refs>
+    <params>
+        <param name="path" nillable="true"/>
+        <param name="debug" nillable="true" default="false"/>
+        <param name="for-hosts" nillable="true"/>
+        <param name="relative-to" nillable="true"/>
+        <param name="server-identity" feature-id="true" default="kerberos"/>
+        <param name="keytab" feature-id="true"/>
+        <param name="security-realm" feature-id="true"/>
+        <param name="core-service" feature-id="true" default="management"/>
+    </params>
+</feature-spec>

@@ -2,7 +2,9 @@
 <feature-group-spec name="domain" xmlns="urn:wildfly:pm-feature-group:1.0">
 
     <feature-group name="domain-interfaces"/>
-    <feature spec="socket-binding-group"/>
+    <feature spec="socket-binding-group">
+        <param name="socket-binding-group" value="standard-sockets" />
+    </feature>
 
     <feature spec="system-property">
         <param name="system-property" value="java.net.preferIPv4Stack"/>

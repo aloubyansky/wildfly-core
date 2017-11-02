@@ -8,9 +8,9 @@
         </feature>
  
         <feature-group name="host-security-realms"/>           
-        <feature spec="security-realm">
+        <feature spec="core-service.management.security-realm">
             <param name="security-realm" value="ManagementRealm"/>
-            <feature spec="server-identity-secret">
+            <feature spec="core-service.management.security-realm.server-identity.secret">
                 <param name="value" value="&quot;c2xhdmVfdXNlcl9wYXNzd29yZA==&quot;"/>
             </feature>
         </feature>

@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feature-spec name="subsystem.elytron.sasl-authentication-factory" xmlns="urn:wildfly:pm-feature-spec:1.0">
+  <annotation name="add">
+    <elem name="addr-params" value="host,profile,subsystem,sasl-authentication-factory"/>
+    <elem name="op-params" value="sasl-server-factory,security-domain,mechanism-configurations"/>
+  </annotation>
+  <refs>
+    <ref feature="subsystem.elytron"/>
+    <ref feature="subsystem.elytron.configurable-sasl-server-factory">
+      <param name="host" maps-to="host"/>
+      <param name="profile" maps-to="profile"/>
+      <param name="subsystem" maps-to="subsystem"/>
+      <param name="sasl-server-factory" maps-to="configurable-sasl-server-factory"/>
+    </ref>
+    <ref feature="subsystem.elytron.security-domain"/>
+  </refs>
+  <params>
+    <param name="host" default="PM_UNDEFINED" feature-id="true"/>
+    <param name="profile" default="PM_UNDEFINED" feature-id="true"/>
+    <param name="subsystem" feature-id="true"/>
+    <param name="sasl-authentication-factory" feature-id="true"/>
+    <param name="sasl-server-factory" nillable="false"/>
+    <param name="security-domain" nillable="false"/>
+    <param name="mechanism-configurations" nillable="false"/>
+  </params>
+</feature-spec>

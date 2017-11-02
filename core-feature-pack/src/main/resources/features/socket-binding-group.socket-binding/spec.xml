@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feature-spec name="socket-binding-group.socket-binding" xmlns="urn:wildfly:pm-feature-spec:1.0">
+  <annotation name="add">
+    <elem name="addr-params" value="socket-binding-group,socket-binding"/>
+  </annotation>
+  <provides>
+    <capability name="org.wildfly.network.socket-binding.$socket-binding"/>
+  </provides>
+  <requires>
+    <capability name="org.wildfly.network.interface.$interface" optional="true"/>
+  </requires>
+  <refs>
+    <ref feature="socket-binding-group"/>
+    <ref feature="interface" nillable="true"/>
+  </refs>
+  <params>
+    <param name="socket-binding" feature-id="true"/>
+    <param name="socket-binding-group" feature-id="true"/>
+    <param name="interface" nillable="true"/>
+    <param name="port" nillable="true"/>
+    <param name="multicast-address" nillable="true"/>
+    <param name="multicast-port" nillable="true"/>
+  </params>
+</feature-spec>

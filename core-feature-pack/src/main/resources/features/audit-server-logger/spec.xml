@@ -4,7 +4,7 @@
     <elem name="addr-params" value="host,core-service,access,server-logger"/>
   </annotation>
   <refs>
-    <ref feature="audit"/>
+    <ref feature="core-service.management.access.audit"/>
   </refs>
   <params>
     <param name="host" default="PM_UNDEFINED" feature-id="true"/>

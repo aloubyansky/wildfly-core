@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feature-spec name="socket-binding-group.remote-destination-outbound-socket-binding" xmlns="urn:wildfly:pm-feature-spec:1.0">
+  <annotation name="add">
+    <elem name="addr-params" value="socket-binding-group,remote-destination-outbound-socket-binding"/>
+    <elem name="op-params" value="binding-host,port"/>
+    <elem name="op-params-mapping" value="host,port"/>
+  </annotation>
+  <provides>
+    <capability name="org.wildfly.network.outbound-socket-binding.$remote-destination-outbound-socket-binding"/>
+  </provides>
+  <requires>
+    <capability name="org.wildfly.network.interface.$source-interface" optional="true"/>
+  </requires>
+  <refs>
+    <ref feature="socket-binding-group"/>
+  </refs>
+  <params>
+    <param name="remote-destination-outbound-socket-binding" feature-id="true"/>
+    <param name="socket-binding-group" feature-id="true"/>
+    <param name="binding-host"/>
+    <param name="port" nillable="true"/>
+    <param name="source-interface" nillable="true"/>
+  </params>
+</feature-spec>

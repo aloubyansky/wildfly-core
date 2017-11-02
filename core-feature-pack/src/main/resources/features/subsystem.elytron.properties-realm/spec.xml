@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feature-spec name="subsystem.elytron.properties-realm" xmlns="urn:wildfly:pm-feature-spec:1.0">
+  <annotation name="add">
+    <elem name="addr-params" value="host,profile,subsystem,properties-realm"/>
+    <elem name="op-params" value="users-properties,groups-properties"/>
+  </annotation>
+  <refs>
+    <ref feature="subsystem.elytron"/>
+  </refs>
+  <params>
+    <param name="host" default="PM_UNDEFINED" feature-id="true"/>
+    <param name="profile" default="PM_UNDEFINED" feature-id="true"/>
+    <param name="subsystem" feature-id="true"/>
+    <param name="properties-realm" feature-id="true"/>
+    <param name="users-properties" nillable="false"/>
+    <param name="groups-properties" nillable="false"/>
+  </params>
+</feature-spec>

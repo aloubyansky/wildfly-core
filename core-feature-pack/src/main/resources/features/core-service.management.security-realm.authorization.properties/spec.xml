@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feature-spec name="core-service.management.security-realm.authorization.properties" xmlns="urn:wildfly:pm-feature-spec:1.0">
+  <annotation name="add">
+    <elem name="addr-params" value="host,core-service,security-realm,authorization"/>
+  </annotation>
+  <refs>
+    <ref feature="core-service.management.security-realm"/>
+  </refs>
+  <params>
+    <param name="host" default="PM_UNDEFINED" feature-id="true"/>
+    <param name="core-service" default="management" feature-id="true"/>
+    <param name="security-realm" feature-id="true"/>
+    <param name="authorization" default="properties" feature-id="true"/>
+    <param name="path"/>
+    <param name="relative-to" default="jboss.server.config.dir"/>
+  </params>
+</feature-spec>

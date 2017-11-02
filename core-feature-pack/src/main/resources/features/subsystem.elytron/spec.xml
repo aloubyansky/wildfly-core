@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feature-spec name="subsystem.elytron" xmlns="urn:wildfly:pm-feature-spec:1.0">
+  <annotation name="add">
+    <elem name="addr-params" value="host,profile,subsystem"/>
+    <elem name="op-params" value="final-providers,disallowed-providers"/>
+  </annotation>
+  <provides>
+    <capability name="$profile.org.wildfly.security.elytron"/>
+  </provides>
+  <requires>
+    <capability name="$profile.org.wildfly.security.providers.$initial-providers" optional="true"/>
+    <capability name="$profile.org.wildfly.security.providers.$final-providers" optional="true"/>
+    <capability name="$profile.org.wildfly.security.authentication-context.$default-authentication-context" optional="true"/>
+  </requires>
+  <refs>
+    <ref feature="extension" include="true"/>
+    <ref feature="host" nillable="true"/>
+    <ref feature="profile" include="true" nillable="true"/>
+  </refs>
+  <params>
+    <param name="host" default="PM_UNDEFINED" feature-id="true"/>
+    <param name="profile" default="PM_UNDEFINED" feature-id="true"/>
+    <param name="subsystem" default="elytron" feature-id="true"/>
+    <param name="extension" default="org.wildfly.extension.elytron"/>
+    <param name="final-providers" nillable="true"/>
+    <param name="disallowed-providers" default="[&quot;OracleUcrypto&quot;]"/>
+    <param name="initial-providers" nillable="true"/>
+    <param name="default-authentication-context" nillable="true"/>
+  </params>
+  <packages>
+    <package name="org.wildfly.extension.elytron.main"/>
+    <package name="org.wildfly.security.elytron.main"/>
+  </packages>
+</feature-spec>

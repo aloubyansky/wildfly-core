@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feature-spec name="core-service.management.access.authorization.role-mapping.include" xmlns="urn:wildfly:pm-feature-spec:1.0">
+  <annotation name="add">
+    <elem name="addr-pref" value="/core-service=management"/>
+    <elem name="addr-params" value="access,role-mapping,include"/>
+    <elem name="op-params" value="type,name"/>
+  </annotation>
+  <refs>
+    <ref feature="core-service.management.access.authorization.role-mapping"/>
+  </refs>
+  <params>
+    <param name="access" default="authorization" feature-id="true"/>
+    <param name="role-mapping" feature-id="true"/>
+    <param name="include" feature-id="true"/>
+    <param name="type" default="user"/>
+    <param name="name"/>
+  </params>
+</feature-spec>

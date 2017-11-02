@@ -1,21 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <feature-group-spec name="host-audit" xmlns="urn:wildfly:pm-feature-group:1.0">
-    <feature spec="audit">
-        <feature spec="audit-json-formatter"/>
-        <feature spec="audit-file-handler">
+    <feature spec="core-service.management.access.audit">
+        <feature spec="core-service.management.access.audit.json-formatter">
+            <param name="json-formatter" value="json-formatter" />
+        </feature>
+        <feature spec="core-service.management.access.audit.file-handler">
             <param name="file-handler" value="host-file"/>
             <param name="relative-to" value="jboss.domain.data.dir"/>
         </feature>
-        <feature spec="audit-file-handler">
+        <feature spec="core-service.management.access.audit.file-handler">
             <param name="file-handler" value="server-file"/>
         </feature>
-        <feature spec="audit-logger">
-            <feature spec="audit-logger-handler">
+        <feature spec="core-service.management.access.audit.logger.audit-log">
+            <feature spec="core-service.management.access.audit.logger.audit-log.handler">
                 <param name="handler" value="host-file"/>
             </feature>
         </feature>
         <feature spec="audit-server-logger">
-            <feature spec="audit-server-logger-handler"/>
+            <feature spec="audit-server-logger-handler">
+                <param name="handler" value="server-file" />
+            </feature>
         </feature>
     </feature>
 </feature-group-spec>

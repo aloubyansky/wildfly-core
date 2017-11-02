@@ -4,10 +4,10 @@
     <feature-group name="basic-profile"/>
 
     <feature-group name="discovery"/>
-    <feature spec="elytron">
+    <feature spec="subsystem.elytron">
         <feature-group name="elytron-app">
-            <include feature-id="elytron-security-domain:security-domain=ApplicationDomain">
-                <feature spec="elytron-security-domain-realm">
+            <include feature-id="subsystem.elytron.security-domain:security-domain=ApplicationDomain">
+                <feature spec="subsystem.elytron.security-domain_realms">
                     <param name="realm" value="{realm=local}"/>
                 </feature>
             </include>

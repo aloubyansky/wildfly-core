@@ -1,0 +1,16 @@
+<?xml version="1.0" ?>
+
+<feature-spec xmlns="urn:wildfly:pm-feature-spec:1.0" name="core-service.management.security-realm.server-identity.kerberos">
+    <annotation name="add">
+        <elem name="addr-params" value="core-service,security-realm,server-identity"/>
+    </annotation>
+    <refs>
+        <ref feature="core-service.management.security-realm"/>
+        <ref feature="core-service.management"/>
+    </refs>
+    <params>
+        <param name="server-identity" feature-id="true" default="kerberos"/>
+        <param name="security-realm" feature-id="true"/>
+        <param name="core-service" feature-id="true" default="management"/>
+    </params>
+</feature-spec>

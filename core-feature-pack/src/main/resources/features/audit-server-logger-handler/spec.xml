@@ -5,7 +5,7 @@
   </annotation>
   <refs>
     <ref feature="audit-server-logger"/>
-    <ref feature="audit-file-handler">
+    <ref feature="core-service.management.access.audit.file-handler">
       <param name="handler" maps-to="file-handler"/>
       <param name="access" maps-to="access"/>
       <param name="host" maps-to="host"/>
@@ -17,6 +17,6 @@
     <param name="core-service" default="management" feature-id="true"/>
     <param name="access" feature-id="true"/>
     <param name="server-logger" feature-id="true"/>
-    <param name="handler" default="server-file" feature-id="true"/>
+    <param name="handler" feature-id="true"/>
   </params>
 </feature-spec>

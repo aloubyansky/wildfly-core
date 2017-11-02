@@ -1,0 +1,32 @@
+<?xml version="1.0" ?>
+
+<feature-spec xmlns="urn:wildfly:pm-feature-spec:1.0" name="core-service.management.security-realm.server-identity.ssl">
+    <annotation name="add">
+        <elem name="op-params" value="alias,enabled-cipher-suites,enabled-protocols,generate-self-signed-certificate-host,key-password,key-password-credential-reference,keystore-password,keystore-password-credential-reference,keystore-path,keystore-provider,keystore-relative-to,protocol"/>
+        <elem name="addr-params" value="core-service,security-realm,server-identity"/>
+    </annotation>
+    <refs>
+        <ref feature="core-service.management.security-realm"/>
+        <ref feature="host" nillable="true"/>
+        <ref feature="profile" include="true" nillable="true"/>
+    </refs>
+    <params>
+        <param name="host" default="PM_UNDEFINED" feature-id="true"/>
+        <param name="profile" default="PM_UNDEFINED" feature-id="true"/>
+        <param name="server-identity" feature-id="true" default="ssl"/>
+        <param name="key-password-credential-reference" nillable="true"/>
+        <param name="security-realm" feature-id="true"/>
+        <param name="key-password" nillable="true"/>
+        <param name="keystore-relative-to" nillable="true"/>
+        <param name="enabled-cipher-suites" nillable="true"/>
+        <param name="keystore-password" nillable="true"/>
+        <param name="core-service" feature-id="true" default="management"/>
+        <param name="enabled-protocols" nillable="true" default="[&quot;TLSv1&quot;,&quot;TLSv1.1&quot;,&quot;TLSv1.2&quot;]"/>
+        <param name="generate-self-signed-certificate-host" nillable="true"/>
+        <param name="protocol" nillable="true" default="TLS"/>
+        <param name="keystore-path" nillable="true"/>
+        <param name="alias" nillable="true"/>
+        <param name="keystore-provider" nillable="true" default="JKS"/>
+        <param name="keystore-password-credential-reference" nillable="true"/>
+    </params>
+</feature-spec>

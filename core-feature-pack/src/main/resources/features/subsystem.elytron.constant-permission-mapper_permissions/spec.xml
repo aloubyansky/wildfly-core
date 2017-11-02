@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feature-spec name="subsystem.elytron.constant-permission-mapper_permissions" xmlns="urn:wildfly:pm-feature-spec:1.0">
+  <annotation name="list-add">
+    <elem name="addr-params" value="host,profile,subsystem,constant-permission-mapper"/>
+    <elem name="op-params" value="permissions"/>
+  </annotation>
+  <refs>
+    <ref feature="subsystem.elytron.constant-permission-mapper"/>
+  </refs>
+  <params>
+    <param name="host" default="PM_UNDEFINED" feature-id="true"/>
+    <param name="profile" default="PM_UNDEFINED" feature-id="true"/>
+    <param name="subsystem" feature-id="true"/>
+    <param name="constant-permission-mapper" feature-id="true"/>
+    <param name="permissions" feature-id="true"/>
+  </params>
+</feature-spec>

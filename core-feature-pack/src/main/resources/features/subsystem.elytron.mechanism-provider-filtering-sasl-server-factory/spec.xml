@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feature-spec name="subsystem.elytron.mechanism-provider-filtering-sasl-server-factory" xmlns="urn:wildfly:pm-feature-spec:1.0">
+  <annotation name="add">
+    <elem name="addr-params" value="host,profile,subsystem,mechanism-provider-filtering-sasl-server-factory"/>
+    <elem name="op-params" value="sasl-server-factory,filters"/>
+  </annotation>
+  <refs>
+    <ref feature="subsystem.elytron"/>
+    <ref feature="subsystem.elytron.provider-sasl-server-factory">
+      <param name="host" maps-to="host"/>
+      <param name="profile" maps-to="profile"/>
+      <param name="subsystem" maps-to="subsystem"/>
+      <param name="sasl-server-factory" maps-to="provider-sasl-server-factory"/>
+    </ref>
+  </refs>
+  <params>
+    <param name="host" default="PM_UNDEFINED" feature-id="true"/>
+    <param name="profile" default="PM_UNDEFINED" feature-id="true"/>
+    <param name="subsystem" feature-id="true"/>
+    <param name="mechanism-provider-filtering-sasl-server-factory" feature-id="true"/>
+    <param name="sasl-server-factory"/>
+    <param name="filters"/>
+  </params>
+</feature-spec>

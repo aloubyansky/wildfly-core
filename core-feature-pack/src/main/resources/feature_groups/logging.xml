@@ -1,26 +1,30 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <feature-group-spec name="logging" xmlns="urn:wildfly:pm-feature-group:1.0">
-    <feature spec="logging">
-      <feature spec="logging-console-handler"/>
-      <feature spec="logging-rotating-file-handler"/>
-      <feature spec="logger">
+    <feature spec="subsystem.logging">
+      <feature spec="subsystem.logging.console-handler"> 
+        <param name="console-handler" value="CONSOLE"/>
+      </feature>
+      <feature spec="subsystem.logging.periodic-rotating-file-handler">
+        <param name="periodic-rotating-file-handler" value="FILE"/>
+      </feature>
+      <feature spec="subsystem.logging.logger">
         <param name="logger" value="com.arjuna"/>
         <param name="level" value="WARN"/>
       </feature>
-      <feature spec="logger">
+      <feature spec="subsystem.logging.logger">
         <param name="logger" value="org.jboss.as.config"/>
         <param name="level" value="DEBUG"/>
       </feature>
-      <feature spec="logger">
+      <feature spec="subsystem.logging.logger">
         <param name="logger" value="sun.rmi"/>
         <param name="level" value="WARN"/>
       </feature>
-      <feature spec="root-logger"/>
-      <feature spec="logging-formatter">
+      <feature spec="subsystem.logging.root-logger.ROOT"/>
+      <feature spec="subsystem.logging.pattern-formatter">
         <param name="pattern-formatter" value="PATTERN"/>
         <param name="pattern" value="&quot;%d{yyyy-MM-dd HH:mm:ss,SSS} %-5p [%c] (%t) %s%e%n&quot;"/>
       </feature>
-      <feature spec="logging-formatter">
+      <feature spec="subsystem.logging.pattern-formatter">
         <param name="pattern-formatter" value="COLOR-PATTERN"/>
         <param name="pattern" value="&quot;%K{level}%d{HH:mm:ss,SSS} %-5p [%c] (%t) %s%e%n&quot;"/>
       </feature>

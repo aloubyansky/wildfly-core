@@ -1,40 +1,42 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <feature-group-spec name="security-realms" xmlns="urn:wildfly:pm-feature-group:1.0">
-    <feature spec="security-realm">
-        <param name="security-realm" value="ManagementRealm"/>
-        <param name="map-groups-to-roles" value="false"/>
-        <feature spec="security-realm-authentication">
-            <param name="authentication" value="local"/>
-            <param name="default-user" value="&quot;\$local&quot;"/>
-            <param name="skip-group-loading" value="true"/>
+    <feature spec="core-service.management">
+        <feature spec="core-service.management.security-realm">
+            <param name="security-realm" value="ManagementRealm"/>
+            <param name="map-groups-to-roles" value="false"/>
+            <feature spec="security-realm-authentication">
+                <param name="authentication" value="local"/>
+                <param name="default-user" value="&quot;\$local&quot;"/>
+                <param name="skip-group-loading" value="true"/>
+            </feature>
+            <feature spec="core-service.management.security-realm.authentication.properties">
+                <param name="path" value="mgmt-users.properties"/>
+            </feature>
+            <feature spec="core-service.management.security-realm.authorization.properties">
+                <param name="path" value="mgmt-groups.properties"/>
+            </feature>
         </feature>
-        <feature spec="authentication-props">
-            <param name="path" value="mgmt-users.properties"/>
-        </feature>
-        <feature spec="authorization-props">
-            <param name="path" value="mgmt-groups.properties"/>
-        </feature>
-    </feature>
-    <feature spec="security-realm">
-        <param name="security-realm" value="ApplicationRealm"/>
-        <feature spec="security-realm-authentication">
-            <param name="authentication" value="local"/>
-            <param name="default-user" value="&quot;\$local&quot;"/>
-            <param name="skip-group-loading" value="true"/>
-            <param name="allowed-users" value="*"/>
-        </feature>
-        <feature spec="authentication-props">
-            <param name="path" value="application-users.properties"/>
-        </feature>
-        <feature spec="authorization-props">
-            <param name="path" value="application-roles.properties"/>
-        </feature>
-        <feature spec="server-identity">
-            <param name="server-identity" value="ssl"/>
-            <param name="keystore-path" value="application.keystore"/>
-            <param name="keystore-password" value="password"/>
-            <param name="alias" value="server"/>
-            <param name="key-password" value="password"/>
+        <feature spec="core-service.management.security-realm">
+            <param name="security-realm" value="ApplicationRealm"/>
+            <feature spec="security-realm-authentication">
+                <param name="authentication" value="local"/>
+                <param name="default-user" value="&quot;\$local&quot;"/>
+                <param name="skip-group-loading" value="true"/>
+                <param name="allowed-users" value="*"/>
+            </feature>
+            <feature spec="core-service.management.security-realm.authentication.properties">
+                <param name="path" value="application-users.properties"/>
+            </feature>
+            <feature spec="core-service.management.security-realm.authorization.properties">
+                <param name="path" value="application-roles.properties"/>
+            </feature>
+            <feature spec="core-service.management.security-realm.server-identity.ssl">
+                <param name="generate-self-signed-certificate-host" value="true" />
+                <param name="keystore-path" value="application.keystore"/>
+                <param name="keystore-password" value="password"/>
+                <param name="alias" value="server"/>
+                <param name="key-password" value="password"/>
+            </feature>
         </feature>
     </feature>
 </feature-group-spec>

@@ -1,0 +1,14 @@
+<?xml version="1.0" ?>
+
+<feature-spec xmlns="urn:wildfly:pm-feature-spec:1.0" name="subsystem.deployment-scanner">
+    <annotation name="add">
+        <elem name="addr-params" value="subsystem"/>
+    </annotation>
+    <refs>
+        <ref feature="extension" include="true"/>
+    </refs>
+    <params>
+        <param name="extension" default="org.jboss.as.deployment-scanner"/>
+        <param name="subsystem" feature-id="true" default="deployment-scanner"/>
+    </params>
+</feature-spec>
