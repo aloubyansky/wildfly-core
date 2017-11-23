@@ -77,6 +77,8 @@ import org.jboss.dmr.Property;
 
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.READ_FEATURE_OPERATION;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.SUBSYSTEM;
+import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.TYPE;
+import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.VALUE_TYPE;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.WRITE_ATTRIBUTE_OPERATION;
 import static org.jboss.as.controller.registry.AttributeAccess.Storage.CONFIGURATION;
 
@@ -180,7 +182,15 @@ public class ReadFeatureHandler extends GlobalOperationHandlers.AbstractMultiTar
         final Locale locale = GlobalOperationHandlers.getLocale(context, operation);
         final PathAddress pa = registry.getPathAddress();
         final ModelNode feature = describeFeature(locale, registry, CapabilityScope.Factory.create(context.getProcessType(), pa),
-                isProfileScope(context.getProcessType(), pa));
+                isProfileScope(context.getProcessType(), pa), context.getProcessType());
+        if(pa.size() == 0 && context.getProcessType().isServer()) { //server-root feature spec
+            ModelNode param = new ModelNode();
+            param.get(ModelDescriptionConstants.NAME).set("server-root");
+            param.get(ModelDescriptionConstants.DEFAULT).set("/");
+            param.get(FEATURE_ID).set(true);
+            feature.require(FEATURE).get(PARAMETERS).add(param);
+            feature.require(FEATURE).require(ANNOTATION).get(ADDRESS_PARAMETERS).set("server-root");
+        }
 
         if (pa.getLastElement() != null && SUBSYSTEM.equals(pa.getLastElement().getKey())) {
             String extension = getExtension(context, pa.getLastElement().getValue());
@@ -220,6 +230,9 @@ public class ReadFeatureHandler extends GlobalOperationHandlers.AbstractMultiTar
                     readChild = false;
                 }
                 if (childReg.isRuntimeOnly()) {
+                    readChild = false;
+                }
+                if (!childReg.isFeature()) {
                     readChild = false;
                 }
 
@@ -301,7 +314,7 @@ public class ReadFeatureHandler extends GlobalOperationHandlers.AbstractMultiTar
     }
 
     private ModelNode describeFeature(final Locale locale, final ImmutableManagementResourceRegistration registration,
-            final CapabilityScope capabilityScope, boolean isProfile) {
+            final CapabilityScope capabilityScope, boolean isProfile, ProcessType process) {
         ModelNode result = new ModelNode();
         if (registration.isFeature()
                 && !registration.isRuntimeOnly()
@@ -364,7 +377,7 @@ public class ReadFeatureHandler extends GlobalOperationHandlers.AbstractMultiTar
             Map<String, String> featureParamMappings = addParams(feature, pa, requestProperties);
             complexAttributeChildren(feature, registration);
             addReferences(feature, registration, featureParamMappings);
-            addRequiredCapabilities(feature, registration, requestProperties, capabilityScope, isProfile, capabilities, featureParamMappings);
+            addRequiredCapabilities(feature, registration, requestProperties, capabilityScope, isProfile, capabilities, featureParamMappings, process);
         }
         return result;
     }
@@ -478,6 +491,23 @@ public class ReadFeatureHandler extends GlobalOperationHandlers.AbstractMultiTar
             if (attDescription.hasDefined(ModelDescriptionConstants.DEFAULT) && attDescription.hasDefined(CAPABILITY_REFERENCE)) {
                 param.get(ModelDescriptionConstants.DEFAULT).set(attDescription.get(ModelDescriptionConstants.DEFAULT));
             }
+            if(attDescription.hasDefined(TYPE) && "LIST".equals(attDescription.get(TYPE).asString())) {
+                try {
+                    switch (ModelType.valueOf(attDescription.get(VALUE_TYPE).asString())) {
+                        case STRING:
+                        case INT:
+                        case BIG_DECIMAL:
+                        case BIG_INTEGER:
+                        case DOUBLE:
+                        case LONG:
+                        case BOOLEAN:
+                            param.get(TYPE).set("List<String>");
+                            break;
+                    }
+                } catch (IllegalArgumentException ex) {
+                    //value_type is an object
+                }
+            }
             params.add(param);
         }
         if (address == null || PathAddress.EMPTY_ADDRESS.equals(address)) {
@@ -547,6 +577,10 @@ public class ReadFeatureHandler extends GlobalOperationHandlers.AbstractMultiTar
     }
 
     private void addReference(ModelNode refs, ImmutableManagementResourceRegistration registration, Map<String, String> featureParamMappings) {
+        PathAddress address = registration.getPathAddress();
+        if (address == null || PathAddress.EMPTY_ADDRESS.equals(address)) {
+            return;
+        }
         if (registration.isFeature()) {
             ModelNode ref = new ModelNode();
             ref.get(FEATURE).set(registration.getFeature());
@@ -589,7 +623,8 @@ public class ReadFeatureHandler extends GlobalOperationHandlers.AbstractMultiTar
             CapabilityScope scope,
             boolean isProfile,
             Set<String> capabilities,
-            Map<String, String> featureParamMappings) {
+            Map<String, String> featureParamMappings,
+            ProcessType process) {
         if (requestProperties.isDefined()) {
             List<Property> request = requestProperties.asPropertyList();
             if (!request.isEmpty()) {
@@ -610,16 +645,20 @@ public class ReadFeatureHandler extends GlobalOperationHandlers.AbstractMultiTar
                         if (capReg != null && capReg.getCapability().isDynamicallyNamed()) {
                             capabilityName = baseName + ".$" + att.getName();
                         }
-                        if (isProfile) {
-                            capabilityName = "$profile." + capabilityName;
-                        }
                         if (filteredOut && (capabilityName.startsWith("org.wildfly.domain.server-group.")
                                 || capabilityName.startsWith("org.wildfly.domain.socket-binding-group."))) {
                             continue;
-                        } else {
-                            capability.get(NAME).set(capabilityName);
                         }
                         capability.get("optional").set(att.getValue().hasDefined(NILLABLE) && att.getValue().get(NILLABLE).asBoolean());
+                        if (isProfile) {
+                            if(!capabilityName.startsWith("org.wildfly.network.socket-binding")) {
+                                capabilityName = "$profile." + capabilityName;
+                            }
+//                            if(isGlobalCapability(capReg, process)) {
+//                                capability.get("optional").set(true);
+//                            }
+                        }
+                        capability.get(NAME).set(capabilityName);
                         required.add(capability);
                         if (att.getValue().hasDefined(FEATURE_REFERENCE) && att.getValue().require(FEATURE_REFERENCE).asBoolean()) {
                             if (capReg != null) {
@@ -647,6 +686,15 @@ public class ReadFeatureHandler extends GlobalOperationHandlers.AbstractMultiTar
                 }
             }
         }
+    }
+
+    private boolean isGlobalCapability(CapabilityRegistration capReg, ProcessType process) {
+        for (RegistrationPoint regPoint : (Set<RegistrationPoint>) capReg.getRegistrationPoints()) {
+            if (!isProfileScope(process, regPoint.getAddress())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private ImmutableManagementResourceRegistration getRootRegistration(final ImmutableManagementResourceRegistration registration) {
