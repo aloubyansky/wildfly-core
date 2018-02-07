@@ -55,6 +55,7 @@ class ResourceBuilderRoot implements ResourceBuilder {
     private boolean isRuntime = false;
     private Set<RuntimeCapability> incorporatingCapabilities;
     private boolean isFeature = true;
+    private Set<CapabilityReferenceRecorder> requirements;
 
 
     /** Normal constructor */
@@ -80,6 +81,9 @@ class ResourceBuilderRoot implements ResourceBuilder {
         this.children.addAll(toCopy.children);
         if (toCopy.incorporatingCapabilities != null) {
             this.incorporatingCapabilities = new HashSet<>(toCopy.incorporatingCapabilities);
+        }
+        if (toCopy.requirements != null) {
+            this.requirements = new HashSet<>(toCopy.requirements);
         }
         this.addHandler = toCopy.addHandler;
         this.removeHandler = toCopy.removeHandler;
@@ -210,6 +214,12 @@ class ResourceBuilderRoot implements ResourceBuilder {
     @Override
     public ResourceBuilder setIncorporatingCapabilities(Set<RuntimeCapability> incorporating) {
         this.incorporatingCapabilities = incorporating;
+        return this;
+    }
+
+    @Override
+    public ResourceBuilder setRequirements(Set<CapabilityReferenceRecorder> requirements) {
+        this.requirements = requirements;
         return this;
     }
 
