@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <feature-spec name="elytron-constant-permission-mapper-permission" xmlns="urn:wildfly:pm-feature-spec:1.0">
-  <annotation name="list-add">
+  <annotation name="jboss-op">
+    <elem name="name" value="list-add"/>
     <elem name="addr-params" value="host,profile,subsystem,constant-permission-mapper"/>
     <elem name="op-params" value="permissions"/>
   </annotation>

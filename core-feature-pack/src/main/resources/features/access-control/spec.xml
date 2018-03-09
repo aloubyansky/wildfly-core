@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <feature-spec name="access-control" xmlns="urn:wildfly:pm-feature-spec:1.0">
-  <annotation name="write-attribute">
+  <annotation name="jboss-op">
+    <elem name="name" value="write-attribute"/>
     <elem name="addr-pref" value="/core-service=management"/>
     <elem name="addr-params" value="access"/>
     <elem name="op-params" value="provider"/>

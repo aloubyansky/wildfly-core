@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <feature-spec name="domain-controller" xmlns="urn:wildfly:pm-feature-spec:1.0">
-  <annotation name="write-attribute">
+  <annotation name="jboss-op">
+    <elem name="name" value="write-attribute"/>
     <elem name="addr-params" value="host"/>
   </annotation>
   <refs>
