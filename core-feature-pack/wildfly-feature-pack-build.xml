@@ -31,6 +31,9 @@
     <config model="standalone">
         <props>
             <prop name="config.branch-is-batch" value="true"/>
+            <prop name="--admin-only" value=""/>
+            <prop name="--internal-empty-config" value=""/>
+            <prop name="--internal-remove-config" value=""/>
         </props>
         <packages>
             <package name="product.conf" optional="true"/>
@@ -48,6 +51,10 @@
     <config model="domain">
         <props>
             <prop name="config.branch-is-batch" value="true"/>
+            <prop name="--empty-domain-config" value=""/>
+            <prop name="--remove-existing-domain-config" value=""/>
+            <prop name="--empty-host-config" value=""/>
+            <prop name="--remove-existing-host-config" value=""/>
         </props>
         <packages>
             <package name="product.conf" optional="true"/>
@@ -59,14 +66,14 @@
 
     <config name="standalone.xml" model="standalone">
         <props>
-            <prop name="config-name" value="standalone.xml"/>
+            <prop name="--server-config" value="standalone.xml"/>
         </props>
         <feature-group name="standalone"/>
     </config>
 
     <config name="default-domain" model="domain">
         <props>
-            <prop name="domain-config-name" value="domain.xml"/>
+            <prop name="--domain-config" value="domain.xml"/>
         </props>
         <feature-group name="domain"/>
     </config>
@@ -77,29 +84,29 @@
         </config-deps>
         <props>
             <prop name="config.branch-is-batch" value="true"/>
+            <prop name="--domain-config" value="domain.xml"/>
+            <prop name="--empty-host-config" value=""/>
+            <prop name="--remove-existing-host-config" value=""/>
         </props>
     </config>
 
     <config name="default-host" model="host">
         <props>
-            <prop name="host-config-name" value="host.xml"/>
-            <prop name="domain-config-name" value="domain.xml"/>
+            <prop name="--host-config" value="host.xml"/>
         </props>
         <feature-group name="host"/>
     </config>
 
     <config name="host-master" model="host">
         <props>
-            <prop name="host-config-name" value="host-master.xml"/>
-            <prop name="domain-config-name" value="domain.xml"/>
+            <prop name="--host-config" value="host-master.xml"/>
         </props>
         <feature-group name="host-master"/>
     </config>
 
     <config name="host-slave" model="host">
         <props>
-            <prop name="host-config-name" value="host-slave.xml"/>
-            <prop name="domain-config-name" value="domain.xml"/>
+            <prop name="--host-config" value="host-slave.xml"/>
         </props>
         <feature-group name="host-slave"/>
     </config>
