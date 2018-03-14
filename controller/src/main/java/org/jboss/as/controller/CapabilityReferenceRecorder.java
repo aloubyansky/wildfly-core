@@ -25,6 +25,7 @@ package org.jboss.as.controller;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Function;
 
 import org.jboss.as.controller.capability.RuntimeCapability;
 import org.jboss.as.controller.registry.ImmutableManagementResourceRegistration;
@@ -91,6 +92,12 @@ public interface CapabilityReferenceRecorder {
         return null;
     }
 
+    /**
+     * Set the address for of the registration of the resource description to which this capability recorder is bound.
+     * @param registrationAddress the registration address of the resource definition that has the capability and its requirement.
+     */
+    default void setRegistrationAddress(PathAddress registrationAddress) {
+    }
     /**
      * Default implementation of {@link org.jboss.as.controller.CapabilityReferenceRecorder}.
      * Derives the required capability name from the {@code baseRequirementName} provided to the constructor and from
@@ -318,6 +325,101 @@ public interface CapabilityReferenceRecorder {
                 dynamicParts.add(element);
             }
             return dynamicParts.toArray(new String[dynamicParts.size()]);
+        }
+    }
+
+    /**
+     * {@link CapabilityReferenceRecorder} that determines the dependent and required capability from
+     * the {@link PathAddress} of the resource registration.
+     */
+    class ResourceCapabilityReferenceRecorder implements CapabilityReferenceRecorder {
+        private final Function<PathAddress, String[]> dynamicDependentNameMapper;
+        private final Function<PathAddress, String[]> dynamicRequirementNameMapper;
+        private final String baseRequirementName;
+        private final String baseDependentName;
+        private PathAddress registrationAddress;
+
+        public ResourceCapabilityReferenceRecorder(Function<PathAddress, String[]> dynamicDependentNameMapper, String baseDependentName , Function<PathAddress, String[]> dynamicRequirementNameMapper, String baseRequirementName) {
+            this.dynamicDependentNameMapper = dynamicDependentNameMapper;
+            this.dynamicRequirementNameMapper = dynamicRequirementNameMapper;
+            this.baseRequirementName = baseRequirementName;
+            this.baseDependentName = baseDependentName;
+        }
+
+        @Override
+        public void setRegistrationAddress(PathAddress registrationAddress) {
+            this.registrationAddress = registrationAddress;
+        }
+
+        public ResourceCapabilityReferenceRecorder(Function<PathAddress, String[]> dynamicNameMapper, String baseDependentName, String baseRequirementName) {
+            this(dynamicNameMapper, baseDependentName, null, baseRequirementName);
+        }
+
+        @Override
+        public void addCapabilityRequirements(OperationContext context, Resource resource, String attributeName, String... attributeValues) {
+            processCapabilityRequirement(context, attributeName, false, attributeValues);
+        }
+
+        @Override
+        public void removeCapabilityRequirements(OperationContext context, Resource resource, String attributeName, String... attributeValues) {
+            processCapabilityRequirement(context, attributeName, true, attributeValues);
+        }
+
+        private void processCapabilityRequirement(OperationContext context, String attributeName, boolean remove, String... attributeValues) {
+            String dependentName = getDependentName(context.getCurrentAddress());
+            String requirementName = getRequirementName(context.getCurrentAddress());
+            if (remove) {
+                context.deregisterCapabilityRequirement(requirementName, dependentName);
+            } else {
+                context.registerAdditionalCapabilityRequirement(requirementName, dependentName, attributeName);
+            }
+        }
+
+        private String getDependentName(PathAddress address) {
+            if (address !=null && dynamicDependentNameMapper != null) {
+                return RuntimeCapability.buildDynamicCapabilityName(baseDependentName, dynamicDependentNameMapper.apply(address));
+            }
+            return baseDependentName;
+        }
+
+        private String getRequirementName(PathAddress address) {
+            if (address !=null && dynamicRequirementNameMapper != null) {
+                return RuntimeCapability.buildDynamicCapabilityName(baseRequirementName, dynamicRequirementNameMapper.apply(address));
+            }
+            return baseRequirementName;
+        }
+
+
+        @Override
+        public String getBaseDependentName() {
+            return baseDependentName;
+        }
+
+        @Override
+        public String getBaseRequirementName() {
+            return baseRequirementName;
+        }
+
+        @Override
+        public boolean isDynamicDependent() {
+            return dynamicDependentNameMapper != null;
+        }
+
+        @Override
+        public String[] getRequirementPatternSegments(String dynamicElement) {
+            String[] dynamicElements;
+            if (registrationAddress != null && dynamicRequirementNameMapper != null) {
+                dynamicElements = dynamicRequirementNameMapper.apply(registrationAddress);
+            } else {
+                dynamicElements = new String[0];
+            }
+            if (dynamicElement != null && !dynamicElement.isEmpty()) {
+                String[] result = new String[dynamicElements.length + 1];
+                System.arraycopy(dynamicElements, 0, result, 0, dynamicElements.length);
+                result[dynamicElements.length] = dynamicElement;
+                return result;
+            }
+            return dynamicElements;
         }
     }
 
