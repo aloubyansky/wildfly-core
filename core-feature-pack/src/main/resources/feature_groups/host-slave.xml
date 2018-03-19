@@ -2,7 +2,7 @@
 <feature-group-spec name="host-slave" xmlns="urn:wildfly:pm-feature-group:1.0">
     <feature spec="host">
         <param name="host" value="slave"/>
-        <param name="persist-name" value="true"/>
+        <param name="persist-name" value="false"/>
 
         <feature spec="host_domain-controller">
             <param name="domain-controller" value="{remote={security-realm=ManagementRealm}}"/>
