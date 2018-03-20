@@ -352,6 +352,7 @@ public class CliLauncher {
         try {
             reader = new BufferedReader(new FileReader(file));
             String line = reader.readLine();
+            long start = System.currentTimeMillis();
             while (cmdCtx.getExitCode() == 0 && !cmdCtx.isTerminated() && line != null) {
                 cmdCtx.handleSafe(line.trim());
                 line = reader.readLine();

@@ -55,6 +55,7 @@ class ResourceBuilderRoot implements ResourceBuilder {
     private boolean isRuntime = false;
     private Set<RuntimeCapability> incorporatingCapabilities;
     private Set<CapabilityReferenceRecorder> requirements;
+    private boolean isFeature = true;
 
 
     /** Normal constructor */
@@ -88,6 +89,7 @@ class ResourceBuilderRoot implements ResourceBuilder {
         this.removeHandler = toCopy.removeHandler;
         this.deprecationData = toCopy.deprecationData;
         this.isRuntime = parent.isRuntime;
+        this.isFeature = parent.isFeature;
         this.attributeResolver = toCopy.attributeResolver; // TODO Remove if this field is unneeded
     }
 
@@ -192,6 +194,12 @@ class ResourceBuilderRoot implements ResourceBuilder {
     }
 
     @Override
+    public ResourceBuilder noFeature() {
+        this.isFeature = false;
+        return this;
+    }
+
+    @Override
     public ResourceBuilder addCapability(Capability capability) {
         capabilities.add(capability);
         return this;
@@ -214,6 +222,7 @@ class ResourceBuilderRoot implements ResourceBuilder {
         this.requirements = requirements;
         return this;
     }
+
     public ResourceBuilder pushChild(final PathElement pathElement) {
         return pushChild(pathElement, resourceResolver.getChildResolver(pathElement.getKey()));
     }
@@ -282,6 +291,7 @@ class ResourceBuilderRoot implements ResourceBuilder {
                     .setRuntime(builder.isRuntime)
                     .setCapabilities(builder.capabilities.toArray(new RuntimeCapability[builder.capabilities.size()]))
                     .setIncorporatingCapabilities(builder.incorporatingCapabilities)
+                    .setFeature(builder.isFeature)
             );
             this.builder = builder;
         }
@@ -353,4 +363,3 @@ class ResourceBuilderRoot implements ResourceBuilder {
     }
 
 }
-

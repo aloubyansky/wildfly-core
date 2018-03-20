@@ -74,6 +74,7 @@ public class BatchRunHandler extends BaseOperationCommand {
     protected void doHandle(CommandContext ctx) throws CommandLineException {
 
         final boolean v = verbose.isPresent(ctx.getParsedCommandLine());
+        long start = System.currentTimeMillis();
 
         final OperationResponse response;
         boolean failed = false;
@@ -137,7 +138,7 @@ public class BatchRunHandler extends BaseOperationCommand {
         if(v) {
             ctx.printDMR(response.getResponseNode());
         } else {
-            ctx.printLine("The batch executed successfully");
+            ctx.printLine("The batch executed successfully in " + (System.currentTimeMillis() - start) + " ms");
             super.handleResponse(ctx, response.getResponseNode(), true);
         }
     }
