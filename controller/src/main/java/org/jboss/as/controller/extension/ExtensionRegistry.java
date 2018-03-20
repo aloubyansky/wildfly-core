@@ -1163,6 +1163,11 @@ public class ExtensionRegistry {
             return deployments.getRequirements();
         }
 
+        @Override
+        public boolean isFeature() {
+            return deployments.isFeature();
+        }
+
     }
 
     private static final JmxAuthorizer NO_OP_AUTHORIZER = new JmxAuthorizer() {

@@ -101,6 +101,7 @@
 
         <!-- Non-default maven plugin versions and configuration -->
         <version.jacoco.plugin>0.8.0</version.jacoco.plugin>
+        <version.org.jboss.pm>1.0.0.Alpha-SNAPSHOT</version.org.jboss.pm>
         <version.org.wildfly.build-tools>1.2.10.Final</version.org.wildfly.build-tools>
         <version.org.wildfly.checkstyle-config>1.0.5.Final</version.org.wildfly.checkstyle-config>
         <!-- wildfly plugin-->
@@ -507,6 +508,11 @@
                     <groupId>org.wildfly.build</groupId>
                     <artifactId>wildfly-server-provisioning-maven-plugin</artifactId>
                     <version>${version.org.wildfly.build-tools}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.jboss.pm</groupId>
+                    <artifactId>wildfly-feature-pack-maven-plugin</artifactId>
+                    <version>${version.org.jboss.pm}</version>
                 </plugin>
             </plugins>
         </pluginManagement>
