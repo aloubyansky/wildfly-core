@@ -64,20 +64,6 @@
         </packages>
     </config>
 
-    <config name="standalone.xml" model="standalone">
-        <props>
-            <prop name="--server-config" value="standalone.xml"/>
-        </props>
-        <feature-group name="standalone"/>
-    </config>
-
-    <config name="default-domain" model="domain">
-        <props>
-            <prop name="--domain-config" value="domain.xml"/>
-        </props>
-        <feature-group name="domain"/>
-    </config>
-
     <config model="host">
         <config-deps>
             <config-dep id="domain-dep" model="domain"/>
@@ -90,21 +76,35 @@
         </props>
     </config>
 
-    <config name="default-host" model="host">
+    <config name="standalone.xml" model="standalone">
+        <props>
+            <prop name="--server-config" value="standalone.xml"/>
+        </props>
+        <feature-group name="standalone"/>
+    </config>
+
+    <config name="domain.xml" model="domain">
+        <props>
+            <prop name="--domain-config" value="domain.xml"/>
+        </props>
+        <feature-group name="domain"/>
+    </config>
+
+    <config name="host.xml" model="host">
         <props>
             <prop name="--host-config" value="host.xml"/>
         </props>
         <feature-group name="host"/>
     </config>
 
-    <config name="host-master" model="host">
+    <config name="host-master.xml" model="host">
         <props>
             <prop name="--host-config" value="host-master.xml"/>
         </props>
         <feature-group name="host-master"/>
     </config>
 
-    <config name="host-slave" model="host">
+    <config name="host-slave.xml" model="host">
         <props>
             <prop name="--host-config" value="host-slave.xml"/>
         </props>
