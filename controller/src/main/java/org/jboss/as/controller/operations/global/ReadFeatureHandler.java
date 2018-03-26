@@ -565,6 +565,8 @@ public class ReadFeatureHandler extends GlobalOperationHandlers.AbstractMultiTar
             ModelNode ref = new ModelNode();
             if (HOST.equals(registration.getPathAddress().getElement(0).getKey())) {
                 ref.get(FEATURE).set("host.extension");
+            } else if (PROFILE.equals(registration.getPathAddress().getElement(0).getKey())) {
+                    ref.get(FEATURE).set("domain.extension");
             } else {
                 ref.get(FEATURE).set(EXTENSION);
             }
