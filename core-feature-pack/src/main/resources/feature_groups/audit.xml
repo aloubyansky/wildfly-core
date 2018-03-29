@@ -6,9 +6,9 @@
         </feature>
         <feature spec="core-service.management.access.audit.file-handler">
             <param name="file-handler" value="file" />
+            <param name="relative-to" value="jboss.server.data.dir"/>
             <param name="formatter" value="json-formatter" />
             <param name="path" value="audit-log.log"/>
-            <param name="relative-to" value="jboss.server.data.dir"/>
         </feature>
         <feature spec="core-service.management.access.audit.logger.audit-log">
             <param name="log-boot" value="true" />

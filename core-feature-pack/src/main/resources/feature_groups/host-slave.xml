@@ -8,10 +8,10 @@
             <param name="domain-controller" value="{remote={security-realm=ManagementRealm}}"/>
         </feature>
 
-        <feature-group name="host-default-security-realms"/>
-        <feature spec="host.core-service.management.security-realm">
+        <feature-group name="host-security-realms"/>
+        <feature spec="core-service.management.security-realm">
             <param name="security-realm" value="ManagementRealm"/>
-            <feature spec="host.core-service.management.security-realm.server-identity.secret">
+            <feature spec="core-service.management.security-realm.server-identity.secret">
                 <param name="value" value="&quot;c2xhdmVfdXNlcl9wYXNzd29yZA==&quot;"/>
             </feature>
         </feature>
