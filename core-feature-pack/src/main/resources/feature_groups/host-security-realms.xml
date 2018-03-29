@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <feature-group-spec name="host-security-realms" xmlns="urn:wildfly:pm-feature-group:1.0">
-    <feature spec="host.core-service.management">
+    <feature spec="core-service.management">
         <feature spec="host.core-service.management.security-realm">
             <param name="security-realm" value="ManagementRealm"/>
             <param name="map-groups-to-roles" value="false"/>

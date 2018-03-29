@@ -123,7 +123,6 @@ public class ReadFeatureHandler extends GlobalOperationHandlers.AbstractMultiTar
     private static final String ADDRESS_PARAMETERS = "addr-params";
     private static final String ADDRESS_PARAMETERS_MAPPING = "addr-params-mapping";
     private static final String FEATURE_ID = "feature-id";
-    private static final String MAPPINGS = "mappings";
     private static final String OPERATION_PARAMETERS = "op-params";
     private static final String OPERATION_PARAMETERS_MAPPING = "op-params-mapping";
     private static final String PARAMETERS = "params";
@@ -565,6 +564,8 @@ public class ReadFeatureHandler extends GlobalOperationHandlers.AbstractMultiTar
             ModelNode ref = new ModelNode();
             if (HOST.equals(registration.getPathAddress().getElement(0).getKey())) {
                 ref.get(FEATURE).set("host.extension");
+            } else if (PROFILE.equals(registration.getPathAddress().getElement(0).getKey())) {
+                    ref.get(FEATURE).set("domain.extension");
             } else {
                 ref.get(FEATURE).set(EXTENSION);
             }

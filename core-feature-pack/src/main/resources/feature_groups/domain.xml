@@ -12,7 +12,7 @@
         <param name="value" value="true"/>
     </feature>
 
-    <feature-group name="domain-access-control"/>
+    <feature-group name="access-control"/>
 
     <feature-group name="domain-host-excludes"/>
 
