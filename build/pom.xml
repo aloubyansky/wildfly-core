@@ -73,7 +73,8 @@
                                 <type>zip</type>
                                 <extension>zip</extension>
                             </featurePack>
-                            <outputDirectory>${project.build.directory}/wildfly-core</outputDirectory>
+                            <outputDirectory>${project.build.directory}/${server.output.dir.prefix}-${project.version}</outputDirectory>
+                            <inheritConfigs>true</inheritConfigs>
                             <configs>
                                 <config>
                                     <model>standalone</model>
@@ -81,11 +82,19 @@
                                 </config>
                                 <config>
                                     <model>host</model>
-                                    <name>default-host</name>
+                                    <name>host.xml</name>
                                 </config>
                                 <config>
                                     <model>domain</model>
-                                    <name>default-domain</name>
+                                    <name>domain.xml</name>
+                                </config>
+                                <config>
+                                    <model>host</model>
+                                    <name>host-master.xml</name>
+                                </config>
+                                <config>
+                                    <model>host</model>
+                                    <name>host-slave.xml</name>
                                 </config>
                             </configs>
                             <inheritPackages>true</inheritPackages>
