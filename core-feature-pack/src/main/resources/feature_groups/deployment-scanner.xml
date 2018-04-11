@@ -5,6 +5,10 @@
         <param name="subsystem" value="deployment-scanner"/>
         <feature spec="subsystem.deployment-scanner.scanner">
             <param name="scanner" value="default"/>
+            <param name="path" value="deployments"/>
+            <param name="relative-to" value="jboss.server.base.dir"/>
+            <param name="scan-interval" value="5000" />
+            <param name="runtime-failure-causes-rollback" value="${jboss.deployment.scanner.rollback.on.failure:false}"/>
         </feature>
     </feature>
 </feature-group-spec>
