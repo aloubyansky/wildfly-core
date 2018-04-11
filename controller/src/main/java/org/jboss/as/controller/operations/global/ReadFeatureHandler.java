@@ -496,7 +496,7 @@ public class ReadFeatureHandler extends GlobalOperationHandlers.AbstractMultiTar
     }
 
     private void processListAttribute(final ModelNode parentFeature, final ImmutableManagementResourceRegistration registration, ObjectListAttributeDefinition objAttDef) {
-        System.out.println("List attr " + registration.getPathAddress().toCLIStyleString() + " " + objAttDef.getName());
+        //System.out.println("List attr " + registration.getPathAddress().toCLIStyleString() + " " + objAttDef.getName());
         final ModelNode parentSpecName = parentFeature.require(NAME);
         ModelNode attFeature = new ModelNode();
         final String specName = parentSpecName.asString() + "." + objAttDef.getName();
@@ -789,7 +789,11 @@ public class ReadFeatureHandler extends GlobalOperationHandlers.AbstractMultiTar
                         } else {
                             dynamicElements = new String[segments.length];
                             for (int i = 0; i < segments.length; i++) {
-                                dynamicElements[i] = "$" + segments[i];
+                                if(segments[i].charAt(0) == '$') {
+                                    dynamicElements[i] = segments[i];
+                                } else {
+                                    dynamicElements[i] = "$" + segments[i];
+                                }
                             }
                         }
                         String baseRequirementName;
