@@ -104,11 +104,12 @@ import org.jboss.as.controller.registry.AliasStepHandler;
 import org.jboss.as.controller.registry.AttributeAccess;
 
 /**
- * {@link org.jboss.as.controller.OperationStepHandler} querying the complete
- * type description of a given model node.
+ * Generates a provisioning feature spec from the resource description.
  *
  * @author <a href="kabir.khan@jboss.com">Kabir Khan</a>
  * @author Brian Stansberry (c) 2012 Red Hat Inc.
+ * @author Emmanuel Hugonnet
+ * @author Alexey Loubyansky
  */
 public class ReadFeatureHandler extends GlobalOperationHandlers.AbstractMultiTargetHandler {
 
@@ -380,7 +381,7 @@ public class ReadFeatureHandler extends GlobalOperationHandlers.AbstractMultiTar
             }
         }
         Set<String> capabilities = new HashSet<>();
-        for (RuntimeCapability cap : registration.getCapabilities()) {
+        for (RuntimeCapability<?> cap : registration.getCapabilities()) {
             String capabilityName = cap.getName();
             if (cap.isDynamicallyNamed()) {
                 PathAddress aliasAddress = createAliasPathAddress(registration, pa);
@@ -620,6 +621,7 @@ public class ReadFeatureHandler extends GlobalOperationHandlers.AbstractMultiTar
                         case BOOLEAN:
                             param.get(TYPE).set("List<String>");
                             break;
+                        default:
                     }
                 } catch (IllegalArgumentException ex) {
                     //value_type is an object
@@ -730,7 +732,7 @@ public class ReadFeatureHandler extends GlobalOperationHandlers.AbstractMultiTar
                         } else {
                             baseName = capabilityName;
                         }
-                        CapabilityRegistration capReg = getCapability(new CapabilityId(baseName, scope));
+                        CapabilityRegistration<?> capReg = getCapability(new CapabilityId(baseName, scope));
                         String attributeName = featureParamMappings.containsKey(att.getName()) ? featureParamMappings.get(att.getName()) : att.getName();
                         if (capReg == null) {
                             capabilityName = baseName + ".$" + attributeName;
@@ -841,10 +843,10 @@ public class ReadFeatureHandler extends GlobalOperationHandlers.AbstractMultiTar
         return false;
     }
 
-    private CapabilityRegistration getCapability(CapabilityId capabilityId) {
-        CapabilityRegistration capReg = this.capabilityRegistry.getCapability(capabilityId);
+    private CapabilityRegistration<?> getCapability(CapabilityId capabilityId) {
+        CapabilityRegistration<?> capReg = this.capabilityRegistry.getCapability(capabilityId);
         if (capReg == null) {
-            for (CapabilityRegistration reg : this.capabilityRegistry.getPossibleCapabilities()) {
+            for (CapabilityRegistration<?> reg : this.capabilityRegistry.getPossibleCapabilities()) {
                 if (reg.getCapabilityId().getName().equals(capabilityId.getName())) {
                     capReg = reg;
                     break;
