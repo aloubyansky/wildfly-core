@@ -121,13 +121,13 @@ public class ReadFeatureHandler extends GlobalOperationHandlers.AbstractMultiTar
 
     final ImmutableCapabilityRegistry capabilityRegistry;
 
-    private static final String ADDRESS_PARAMETERS = "addr-params";
-    private static final String ADDRESS_PARAMETERS_MAPPING = "addr-params-mapping";
-    private static final String FEATURE_ID = "feature-id";
-    private static final String OPERATION_PARAMETERS = "op-params";
-    private static final String OPERATION_PARAMETERS_MAPPING = "op-params-mapping";
-    private static final String PARAMETERS = "params";
-    private static final String REFERENCES = "refs";
+    public static final String ADDRESS_PARAMETERS = "addr-params";
+    public static final String ADDRESS_PARAMETERS_MAPPING = "addr-params-mapping";
+    public static final String FEATURE_ID = "feature-id";
+    public static final String OPERATION_PARAMETERS = "op-params";
+    public static final String OPERATION_PARAMETERS_MAPPING = "op-params-mapping";
+    public static final String PARAMETERS = "params";
+    public static final String REFERENCES = "refs";
 
     //Placeholder for NoSuchResourceExceptions coming from proxies to remove the child in ReadResourceDescriptionAssemblyHandler
     private static final ModelNode PROXY_NO_SUCH_RESOURCE;
@@ -991,7 +991,6 @@ public class ReadFeatureHandler extends GlobalOperationHandlers.AbstractMultiTar
          * of the operation this handler is handling and the value is the full
          * read-resource response. Will not be {@code null}
          * @param accessControlContext context for tracking access control data
-         * @param accessControl type of access control output that is needed
          */
         private ReadFeatureAssemblyHandler(final ModelNode featureDescription, final Map<PathElement, ModelNode> childResources,
                 final ReadFeatureAccessControlContext accessControlContext) {
