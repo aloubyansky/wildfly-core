@@ -137,6 +137,7 @@
                         <configuration>
                             <resources-dir>target/resources/specs</resources-dir>
                             <release-name>Vault</release-name>
+                            <feature-pack-name>${project.artifactId}-new</feature-pack-name>
                         </configuration>
                     </execution>
                 </executions>
