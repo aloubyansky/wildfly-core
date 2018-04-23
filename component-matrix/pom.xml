@@ -667,18 +667,6 @@
             </dependency>
             <dependency>
                 <groupId>org.wildfly.core</groupId>
-                <artifactId>wildfly-core-vault-test-feature-pack</artifactId>
-                <version>${project.version}</version>
-                <type>pom</type>
-            </dependency>
-            <dependency>
-                <groupId>org.wildfly.core</groupId>
-                <artifactId>wildfly-core-vault-test-feature-pack</artifactId>
-                <version>${project.version}</version>
-                <type>zip</type>
-            </dependency>
-            <dependency>
-                <groupId>org.wildfly.core</groupId>
                 <artifactId>wildfly-core-vault-test-galleon-pack</artifactId>
                 <version>${project.version}</version>
                 <type>pom</type>

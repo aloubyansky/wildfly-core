@@ -55,7 +55,11 @@
             <groupId>org.jboss.shrinkwrap</groupId>
             <artifactId>shrinkwrap-api</artifactId>
         </dependency>
-
+        <dependency>
+            <groupId>org.wildfly.core</groupId>
+            <artifactId>wildfly-core-galleon-pack</artifactId>
+            <type>pom</type>
+        </dependency>
     </dependencies>
 
     <build>

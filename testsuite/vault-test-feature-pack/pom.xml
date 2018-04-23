@@ -34,7 +34,7 @@
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
-    <artifactId>wildfly-core-vault-test-feature-pack</artifactId>
+    <artifactId>wildfly-core-vault-test-galleon-pack</artifactId>
 
     <name>WildFly: Vault Test Feature Pack</name>
     <packaging>pom</packaging>
@@ -50,7 +50,7 @@
         <dependency>
             <groupId>org.wildfly.core</groupId>
             <artifactId>wildfly-core-galleon-pack</artifactId>
-            <type>zip</type>
+            <type>pom</type>
             <exclusions>
                 <exclusion>
                     <groupId>*</groupId>
@@ -123,7 +123,6 @@
                         <phase>compile</phase>
                         <configuration>
                             <release-name>Vault</release-name>
-                            <feature-pack-artifact-id>wildfly-core-vault-test-galleon-pack</feature-pack-artifact-id>
                         </configuration>
                     </execution>
                 </executions>

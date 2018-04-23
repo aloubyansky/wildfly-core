@@ -76,7 +76,7 @@
         <dependency>
             <groupId>org.wildfly.core</groupId>
             <artifactId>wildfly-core-vault-test-galleon-pack</artifactId>
-            <type>zip</type>
+            <type>pom</type>
         </dependency>
         <dependency>
             <groupId>org.wildfly.core</groupId>

@@ -40,15 +40,9 @@
 
     <dependencies>
         <dependency>
-            <groupId>${project.groupId}</groupId>
+            <groupId>org.wildfly.core</groupId>
             <artifactId>wildfly-core-galleon-pack</artifactId>
-            <type>zip</type>
-            <exclusions>
-                <exclusion>
-                    <groupId>*</groupId>
-                    <artifactId>*</artifactId>
-                </exclusion>
-            </exclusions>
+            <type>pom</type>
         </dependency>
     </dependencies>
 
