@@ -122,16 +122,16 @@ public class ReadFeatureDescriptionHandler extends GlobalOperationHandlers.Abstr
 
     private final ImmutableCapabilityRegistry capabilityRegistry;
 
-    private static final String $PROFILE_PREFIX = "$profile.";
-    private static final String ADDRESS_PARAMETERS = "addr-params";
-    private static final String ADDRESS_PARAMETERS_MAPPING = "addr-params-mapping";
-    private static final String DOMAIN_EXTENSION = "domain.extension";
-    private static final String FEATURE_ID = "feature-id";
-    private static final String HOST_EXTENSION = "host.extension";
-    private static final String OPERATION_PARAMETERS = "op-params";
-    private static final String OPERATION_PARAMETERS_MAPPING = "op-params-mapping";
-    private static final String PARAMETERS = "params";
-    private static final String REFERENCES = "refs";
+    public static final String $PROFILE_PREFIX = "$profile.";
+    public static final String ADDRESS_PARAMETERS = "addr-params";
+    public static final String ADDRESS_PARAMETERS_MAPPING = "addr-params-mapping";
+    public static final String DOMAIN_EXTENSION = "domain.extension";
+    public static final String FEATURE_ID = "feature-id";
+    public static final String HOST_EXTENSION = "host.extension";
+    public static final String OPERATION_PARAMETERS = "op-params";
+    public static final String OPERATION_PARAMETERS_MAPPING = "op-params-mapping";
+    public static final String PARAMETERS = "params";
+    public static final String REFERENCES = "refs";
 
     //Placeholder for NoSuchResourceExceptions coming from proxies to remove the child in ReadFeatureHandler
     private static final ModelNode PROXY_NO_SUCH_RESOURCE;
@@ -790,7 +790,7 @@ public class ReadFeatureDescriptionHandler extends GlobalOperationHandlers.Abstr
                     for (CapabilityReferenceRecorder requirement : registration.getRequirements()) {
                         String[] segments = requirement.getRequirementPatternSegments(null, aliasAddress);
                         String[] dynamicElements;
-                        if (segments == null) {
+                        if (segments == null || segments.length == 0) {
                             dynamicElements = null;
                         } else {
                             dynamicElements = new String[segments.length];
@@ -982,7 +982,6 @@ public class ReadFeatureDescriptionHandler extends GlobalOperationHandlers.Abstr
          * of the operation this handler is handling and the value is the full
          * read-resource response. Will not be {@code null}
          * @param accessControlContext context for tracking access control data
-         * @param accessControl type of access control output that is needed
          */
         private ReadFeatureAssemblyHandler(final ModelNode featureDescription, final Map<PathElement, ModelNode> childResources,
                 final ReadFeatureAccessControlContext accessControlContext) {
