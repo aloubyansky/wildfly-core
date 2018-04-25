@@ -77,6 +77,7 @@
             <groupId>org.wildfly.core</groupId>
             <artifactId>wildfly-core-vault-test-galleon-pack</artifactId>
             <type>pom</type>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>org.wildfly.core</groupId>

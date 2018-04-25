@@ -517,6 +517,11 @@
             <artifactId>xml-resolver</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>javax.json</groupId>
+            <artifactId>javax.json-api</artifactId>
+        </dependency>
+
     </dependencies>
 
     <build>
