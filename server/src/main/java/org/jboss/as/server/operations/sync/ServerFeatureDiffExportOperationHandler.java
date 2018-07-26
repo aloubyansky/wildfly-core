@@ -21,6 +21,7 @@ import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.EXT
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.FEATURE;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OP;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OP_ADDR;
+import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.PARAMS;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.REMOVE;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.STEPS;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.UUID;
@@ -119,7 +120,7 @@ public class ServerFeatureDiffExportOperationHandler extends ServerModelSyncOper
         operation.remove(OP);
         operation.remove(OP_ADDR);
         for (Property prop : operation.asPropertyList()) {
-            featureConfig.get(FEATURE).get("params").add(prop);
+            featureConfig.get(FEATURE).get(PARAMS).add(prop);
         }
     }
 }

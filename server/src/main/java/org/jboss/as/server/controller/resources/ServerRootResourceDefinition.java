@@ -103,6 +103,7 @@ import org.jboss.as.server.operations.InstallationReportHandler;
 import org.jboss.as.server.operations.InstanceUuidReadHandler;
 import org.jboss.as.server.operations.LaunchTypeHandler;
 import org.jboss.as.server.operations.ProcessTypeHandler;
+import org.jboss.as.server.operations.ReadProvisioningModelOperationHandler;
 import org.jboss.as.server.operations.sync.ReadServerModelOperationHandler;
 import org.jboss.as.server.operations.RunningModeReadHandler;
 import org.jboss.as.server.operations.ServerDomainProcessReloadHandler;
@@ -328,6 +329,7 @@ public class ServerRootResourceDefinition extends SimpleResourceDefinition {
             resourceRegistration.registerOperationHandler(SnapshotTakeHandler.DEFINITION, snapshotTake);
             resourceRegistration.registerOperationHandler(WriteConfigHandler.DEFINITION, WriteConfigHandler.INSTANCE);
             resourceRegistration.registerOperationHandler(GenericModelDescribeOperationHandler.DEFINITION, GenericModelDescribeOperationHandler.INSTANCE, true);
+            resourceRegistration.registerOperationHandler(ReadProvisioningModelOperationHandler.DEFINITION, ReadProvisioningModelOperationHandler.INSTANCE, true);
             resourceRegistration.registerOperationHandler(ReadServerModelOperationHandler.DEFINITION, new ReadServerModelOperationHandler(false));
             resourceRegistration.registerOperationHandler(ReadServerOperationsHandler.DEFINITION, new ReadServerOperationsHandler());
         }
