@@ -103,6 +103,7 @@ import org.jboss.as.server.controller.descriptions.ServerDescriptionConstants;
 import org.jboss.as.server.controller.resources.DeploymentAttributes;
 import org.jboss.as.server.controller.resources.SystemPropertyResourceDefinition;
 import org.jboss.as.server.controller.resources.SystemPropertyResourceDefinition.Location;
+import org.jboss.as.server.operations.ReadConfigAsFeaturesOperationHandler;
 import org.jboss.as.server.operations.ServerVersionOperations.DefaultEmptyListAttributeHandler;
 import org.jboss.as.server.operations.WriteConfigHandler;
 import org.jboss.as.server.services.net.InterfaceAddHandler;
@@ -272,6 +273,7 @@ public class DomainRootDefinition extends SimpleResourceDefinition {
                 GlobalInstallationReportHandler.createDomainOperation(), false);
 
         resourceRegistration.registerOperationHandler(GenericModelDescribeOperationHandler.DEFINITION, GenericModelDescribeOperationHandler.INSTANCE, true);
+        resourceRegistration.registerOperationHandler(ReadConfigAsFeaturesOperationHandler.DEFINITION, ReadConfigAsFeaturesOperationHandler.INSTANCE, true);
         if (isMaster) {
             DeploymentUploadURLHandler.registerMaster(resourceRegistration, contentRepo);
             DeploymentUploadStreamAttachmentHandler.registerMaster(resourceRegistration, contentRepo);

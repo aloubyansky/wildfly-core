@@ -511,7 +511,6 @@ public class ReadFeatureDescriptionHandler extends GlobalOperationHandlers.Abstr
     }
 
     private void processListAttribute(final ModelNode parentFeature, final ImmutableManagementResourceRegistration registration, ObjectListAttributeDefinition objAttDef) {
-        //System.out.println("List attr " + registration.getPathAddress().toCLIStyleString() + " " + objAttDef.getName());
         final ModelNode parentSpecName = parentFeature.require(NAME);
         ModelNode attFeature = new ModelNode();
         final String specName = parentSpecName.asString() + "." + objAttDef.getName();
@@ -553,6 +552,7 @@ public class ReadFeatureDescriptionHandler extends GlobalOperationHandlers.Abstr
         final AttributeDefinition[] attrs = itemType.getValueTypes();
         Map<String, String> opParamMapping = Collections.emptyMap();
         final ModelNode requestProps = new ModelNode();
+//        boolean addId = false;
         for(AttributeDefinition attr : attrs) {
             final ModelNode param = new ModelNode();
             String paramName = attr.getName();
@@ -568,8 +568,11 @@ public class ReadFeatureDescriptionHandler extends GlobalOperationHandlers.Abstr
                     opParamMapping.put(attr.getName(), paramName);
                 }
             }
-            param.get(ModelDescriptionConstants.NAME).set(paramName);
-            if(!attr.isRequired()) {
+            param.get(NAME).set(paramName);
+            if(attr.isRequired()) {
+//                param.get(FEATURE_ID).set(true);
+//                addId = true;
+            } else {
                 param.get(NILLABLE).set(true);
             }
             if (objAttDef.getDefaultValue() != null && objAttDef.getDefaultValue().isDefined()) {
@@ -580,6 +583,16 @@ public class ReadFeatureDescriptionHandler extends GlobalOperationHandlers.Abstr
             }
             params.add(param);
         }
+        /*
+        if(addId) {
+            for(ModelNode param : params.asList()) {
+                if(!idParams.contains(param.get(NAME).asString())) {
+                    continue;
+                }
+                param.get(FEATURE_ID).set(true);
+            }
+        }
+        */
         addOpParam(annotation, requestProps, opParamMapping);
 
         parentFeature.get(CHILDREN).get(specName).set(attFeature);

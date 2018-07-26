@@ -100,6 +100,7 @@ import org.jboss.as.server.operations.InstallationReportHandler;
 import org.jboss.as.server.operations.InstanceUuidReadHandler;
 import org.jboss.as.server.operations.LaunchTypeHandler;
 import org.jboss.as.server.operations.ProcessTypeHandler;
+import org.jboss.as.server.operations.ReadConfigAsFeaturesOperationHandler;
 import org.jboss.as.server.operations.RunningModeReadHandler;
 import org.jboss.as.server.operations.ServerDomainProcessReloadHandler;
 import org.jboss.as.server.operations.ServerDomainProcessShutdownHandler;
@@ -322,6 +323,7 @@ public class ServerRootResourceDefinition extends SimpleResourceDefinition {
             SnapshotTakeHandler snapshotTake = new SnapshotTakeHandler(extensibleConfigurationPersister);
             resourceRegistration.registerOperationHandler(SnapshotTakeHandler.DEFINITION, snapshotTake);
             resourceRegistration.registerOperationHandler(WriteConfigHandler.DEFINITION, WriteConfigHandler.INSTANCE);
+            resourceRegistration.registerOperationHandler(ReadConfigAsFeaturesOperationHandler.DEFINITION, ReadConfigAsFeaturesOperationHandler.INSTANCE, true);
         }
 
         if (isDomain) {
