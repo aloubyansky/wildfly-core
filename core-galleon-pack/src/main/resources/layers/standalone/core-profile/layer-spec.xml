@@ -1,0 +1,14 @@
+<?xml version="1.0" ?>
+<layer-spec xmlns="urn:jboss:galleon:layer-spec:1.0" name="core-profile">
+    <dependencies>
+        <layer name="base-server"/>
+        <layer name="legacy-security"/>
+        <layer name="elytron-security"/> 
+        <layer name="jmx"/> 
+        <layer name="logging"/>
+        <layer name="core-management"/>
+        <layer name="request-controller"/>
+        <layer name="security-manager"/>
+    </dependencies>
+    
+</layer-spec>

@@ -1,0 +1,17 @@
+<?xml version="1.0" ?>
+<layer-spec xmlns="urn:jboss:galleon:layer-spec:1.0" name="base-server">
+    <!-- minimal set, can't remove management -->
+    <feature spec="server-root">
+        <param name="server-root" value="/" />
+    </feature>
+    <feature-group name="interfaces"/>
+    <feature spec="socket-binding-group">
+        <param name="default-interface" value="public" />
+        <param name="socket-binding-group" value="standard-sockets" />
+        <param name="port-offset" value="${jboss.socket.binding.port-offset:0}"/>
+        <feature-group name="management-sockets"/>
+    </feature>
+    <feature-group name="management-audit"/>
+    <feature-group name="access-control"/>
+   
+</layer-spec>

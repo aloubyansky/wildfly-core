@@ -1,0 +1,17 @@
+<?xml version="1.0" ?>
+<layer-spec xmlns="urn:jboss:galleon:layer-spec:1.0" name="legacy-security">  
+    <dependencies>
+        <layer name="base-server"/> 
+    </dependencies>
+    <packages>
+        <package name="org.jboss.as.domain-add-user"/>
+    </packages>
+    <feature-group name="standalone-security-realms"/>
+    <feature spec="core-service.management.management-interface.http-interface">
+        <param name="socket-binding" value="management-http"/>
+        <param name="security-realm" value="ManagementRealm"/>
+        <feature spec="core-service.management.management-interface.http-interface.http-upgrade">
+            <param name="enabled" value="true"/>
+        </feature>
+    </feature>
+</layer-spec>
