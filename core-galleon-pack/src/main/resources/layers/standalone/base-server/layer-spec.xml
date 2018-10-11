@@ -13,5 +13,9 @@
     </feature>
     <feature-group name="management-audit"/>
     <feature-group name="access-control"/>
-   
+
+    <packages>
+        <package name="org.wildfly.embedded"/>
+        <package name="org.wildfly.openssl"/>
+    </packages>
 </layer-spec>
