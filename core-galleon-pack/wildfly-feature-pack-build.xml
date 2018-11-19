@@ -97,4 +97,16 @@
             </host>
         </extensions>
     </generate-feature-specs>
+
+    <diff>
+        <filter>/domain/configuration/domain_xml_history</filter>
+        <filter>/domain/configuration/host_xml_history</filter>
+        <filter>/domain/data</filter>
+        <filter>/domain/log</filter>
+        <filter>/domain/servers</filter>
+        <filter>/standalone/configuration/standalone_xml_history</filter>
+        <filter>/standalone/data</filter>
+        <filter>/standalone/log</filter>
+        <filter>/standalone/tmp</filter>
+    </diff>
 </build>
